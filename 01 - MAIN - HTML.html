@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOMEPAGE MAIN</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- CSS Link -->
+    <link rel="stylesheet" href="01 - MAIN - CSS.css">
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="showHome(); renderDishOfTheDay();">
+            <i class="fas fa-utensils"></i> Food Recipe 101
+        </div>
+        <div class="nav-right-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="handleSearch()">
+                <span class="search-results-badge" id="searchBadge">0</span>
+            </div>
+            <ul class="nav-links">
+                <li><a onclick="showHome()"><i class="fas fa-home"></i> Home</a></li>
+                <li><a onclick="showMenu()"><i class="fas fa-book-open"></i> Recipes</a></li>
+                <li><a onclick="showServices()"><i class="fas fa-concierge-bell"></i> Services</a></li>
+                <li><a onclick="showAbout()"><i class="fas fa-users"></i> About Us</a></li>
+            </ul>
+            <button class="login-btn" id="navLoginBtn">
+                <i class="fas fa-user"></i> Login
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <!-- Home View -->
+        <div id="homeView">
+            <!-- DISH OF THE DAY HERO SECTION -->
+            <div class="hero-split" style="display: flex; border-radius: 30px; margin-bottom: 0px; overflow: hidden; color: white; box-shadow: var(--shadow);">
+                <!-- left side: original hero text -->
+                <div style="flex: 1; padding: 30px; position: relative;">
+                    <div style="position: absolute; top: 0; right: 0; width: 300px; height: 100%; background: url('data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\' fill=\'rgba(255,255,255,0.05)\'><path d=\'M20 20L80 20L80 80L20 80Z\'/><circle cx=\'50\' cy=\'50\' r=\'15\'/></svg>'); opacity: 0.1; pointer-events: none;"></div>
+                    <h1 style="font-size: 4em; margin-bottom: 8px; line-height: 1.2;">Discover & Cook<br>Amazing Meals</h1>
+                    <p style="font-size: 1.5em; opacity: 0.9; max-width: 400px; margin-bottom: 15px;"><br>Join our community of food lovers. Share your creations, save favorites, and learn from others.</p>
+                </div>
+                
+                <!-- right side: FEATURED RECIPE -->
+                <div style="flex: 1; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); padding: 25px; display: flex; flex-direction: column; justify-content: center; border-left: 2px solid rgba(255,255,255,0.2);">
+                    <span style="display: inline-block; background: var(--accent); color: var(--dark); padding: 5px 15px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; margin-bottom: 12px; align-self: flex-start;">
+                        <i class="fas fa-crown"></i> FEATURED RECIPE
+                    </span>
+                    <div id="dishOfDayContainer" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                        <!-- JavaScript will fill this with compact content -->
+                    </div>
+                </div>
+            </div>
+                
+            <div id="searchHeader" style="display: none;"></div>
+            <div class="recipe-grid" id="recipeGrid"></div>
+        </div>
+
+        <!-- Menu View -->
+        <div id="menuView" style="display: none;">
+            <div class="hero">
+                <h1>All Recipes</h1>
+                <p>Browse our complete collection of delicious home-cooked meals.</p>
+                <div class="category-filters">
+                    <button class="category-btn active" onclick="filterByCategory('all')">
+                        <i class="fas fa-utensils"></i> All
+                    </button>
+                    <button class="category-btn" onclick="filterByCategory('Main Dish')">
+                        <i class="fas fa-drumstick-bite"></i> Main Dish
+                    </button>
+                    <button class="category-btn" onclick="filterByCategory('Dessert')">
+                        <i class="fas fa-cake-candles"></i> Dessert
+                    </button>
+                    <button class="category-btn" onclick="filterByCategory('Drinks')">
+                        <i class="fas fa-wine-glass-alt"></i> Drinks
+                    </button>
+                </div>
+            </div>
+            <div id="menuSearchHeader" style="display: none;"></div>
+            <div id="menuContent"></div>
+        </div>
+
+        <!-- Services View -->
+        <div id="servicesView" style="display: none;">
+            <div class="hero">
+                <h1>Our Services</h1>
+                <p>Everything you need to elevate your cooking journey</p>
+            </div>
+            
+            <!-- Quick Actions Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
+                <div style="background: white; border-radius: 20px; padding: 25px; text-align: center; box-shadow: var(--shadow); position: relative;" onmouseenter="showMinimizeIcon(1)" onmouseleave="hideMinimizeIcon(1)">
+                    <div id="minimizeIcon-1" onclick="toggleMinimizeService(1)" style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: var(--light); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--gray); transition: 0.3s; z-index: 10;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='var(--light)'; this.style.color='var(--gray)'">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                    <div onclick="showSubmitRecipeForm()" style="cursor: pointer;">
+                        <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-plus-circle" style="color: white; font-size: 2em;"></i>
+                        </div>
+                        <h3>Submit Recipe</h3>
+                        <p style="color: var(--gray);">Share your culinary creation</p>
+                    </div>
+                    <div id="minimizedContent-1" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
+                        <p style="color: var(--gray); font-size: 0.9em;">Recipe submission form is minimized</p>
+                        <button onclick="showSubmitRecipeForm()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9em;">Restore</button>
+                    </div>
+                </div>
+                
+                <div style="background: white; border-radius: 20px; padding: 25px; text-align: center; box-shadow: var(--shadow); position: relative;" onmouseenter="showMinimizeIcon(2)" onmouseleave="hideMinimizeIcon(2)">
+                    <div id="minimizeIcon-2" onclick="toggleMinimizeService(2)" style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: var(--light); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--gray); transition: 0.3s; z-index: 10;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='var(--light)'; this.style.color='var(--gray)'">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                    <div onclick="openChatBot()" style="cursor: pointer;">
+                        <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-comments" style="color: white; font-size: 2em;"></i>
+                        </div>
+                        <h3>Chat Bot</h3>
+                        <p style="color: var(--gray);">24/7 Support</p>
+                    </div>
+                    <div id="minimizedContent-2" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
+                        <p style="color: var(--gray); font-size: 0.9em;">Chat bot is minimized</p>
+                        <button onclick="openChatBot()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9em;">Restore</button>
+                    </div>
+                </div>
+                
+                <div style="background: white; border-radius: 20px; padding: 25px; text-align: center; box-shadow: var(--shadow); position: relative;" onmouseenter="showMinimizeIcon(3)" onmouseleave="hideMinimizeIcon(3)">
+                    <div id="minimizeIcon-3" onclick="toggleMinimizeService(3)" style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: var(--light); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--gray); transition: 0.3s; z-index: 10;" onmouseover="this.style.background='var(--primary)'; this.style.color='white'" onmouseout="this.style.background='var(--light)'; this.style.color='var(--gray)'">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                    <div onclick="openEmailSupport()" style="cursor: pointer;">
+                        <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-envelope" style="color: white; font-size: 2em;"></i>
+                        </div>
+                        <h3>Email Support</h3>
+                        <p style="color: var(--gray);">support@foodrecipe101.com</p>
+                    </div>
+                    <div id="minimizedContent-3" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
+                        <p style="color: var(--gray); font-size: 0.9em;">Email support is minimized</p>
+                        <button onclick="openEmailSupport()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9em;">Restore</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Section with Questions Display -->
+            <div style="background: white; border-radius: 30px; padding: 40px; margin-top: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+                    <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-question-circle" style="color: white; font-size: 1.8em;"></i>
+                    </div>
+                    <h2 style="color: var(--dark); font-size: 2em;">Frequently Asked Questions</h2>
+                </div>
+                
+                <div style="display: grid; gap: 20px; margin-bottom: 40px;">
+                    <div style="background: var(--light); border-radius: 15px; padding: 25px; border-left: 5px solid var(--primary);">
+                        <h3 style="color: var(--dark); margin-bottom: 10px;"><i class="fas fa-chevron-right" style="color: var(--primary);"></i> How do I save recipes?</h3>
+                        <p style="color: var(--gray);">Click the heart icon on any recipe card or "Save Recipe" in details. Login required.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 15px; padding: 25px; border-left: 5px solid var(--primary);">
+                        <h3 style="color: var(--dark); margin-bottom: 10px;"><i class="fas fa-chevron-right" style="color: var(--primary);"></i> How to submit recipes?</h3>
+                        <p style="color: var(--gray);">Click "Submit Recipe" above, fill the form, and our team will review your submission.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 15px; padding: 25px; border-left: 5px solid var(--primary);">
+                        <h3 style="color: var(--dark); margin-bottom: 10px;"><i class="fas fa-chevron-right" style="color: var(--primary);"></i> Are recipes free?</h3>
+                        <p style="color: var(--gray);">All recipes are completely free! We believe in accessible cooking for everyone.</p>
+                    </div>
+                </div>
+                
+                <!-- Ask a Question Form -->
+                <div style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; padding: 30px; color: white; margin-bottom: 40px;">
+                    <h3 style="margin-bottom: 20px;"><i class="fas fa-pencil-alt"></i> Ask Our Team</h3>
+                    <form id="faqForm" onsubmit="submitFAQQuestion(event)">
+                        <div style="display: grid; gap: 15px; grid-template-columns: 1fr 1fr;">
+                            <input type="text" id="faqName" placeholder="Your Name" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
+                            <input type="email" id="faqEmail" placeholder="Your Email" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
+                        </div>
+                        <textarea id="faqQuestion" rows="4" placeholder="Type your question..." required style="width: 100%; padding: 15px; border: none; border-radius: 15px; margin: 15px 0;"></textarea>
+                        <button type="submit" style="padding: 15px 30px; background: white; color: var(--primary); border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">Submit Question</button>
+                    </form>
+                </div>
+                
+                <!-- Questions & Answers Section -->
+                <div style="margin-top: 40px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+                        <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-comments" style="color: white; font-size: 1.8em;"></i>
+                        </div>
+                        <h2 style="color: var(--secondary); font-size: 2em;">Questions & Answers</h2>
+                    </div>
+                    
+                    <div id="questionsContainer" style="display: grid; gap: 20px;">
+                        <!-- Questions will be dynamically inserted here -->
+                    </div>
+                    
+                    <div id="noQuestionsMessage" style="text-align: center; padding: 40px; background: var(--light); border-radius: 20px; color: var(--gray);">
+                        <i class="fas fa-comment-dots" style="font-size: 3em; margin-bottom: 15px;"></i>
+                        <p>No questions yet. Be the first to ask!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Recipe Form (Hidden by default) -->
+            <div id="submitRecipeFormContainer" style="display: none; background: white; border-radius: 30px; padding: 0; margin: 30px 0; overflow: hidden; box-shadow: var(--shadow);">
+                <!-- Form Header with Minimize Button -->
+                <div style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="toggleMinimizeForm()">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-plus-circle" style="color: var(--primary); font-size: 1.8em;"></i>
+                        </div>
+                        <h2 style="color: white; font-size: 2em; margin: 0;">Submit Your Recipe</h2>
+                    </div>
+                    <button id="minimizeFormBtn" onclick="toggleMinimizeForm(); event.stopPropagation();" style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2em; transition: 0.3s;">
+                        <i class="fas fa-minus" id="minimizeIcon"></i>
+                    </button>
+                </div>
+                
+                <!-- Form Content (can be minimized) -->
+                <div id="submitFormContent" style="padding: 40px; transition: all 0.3s ease;">
+                    <form id="submitRecipeForm" onsubmit="handleRecipeSubmission(event)">
+                        <!-- Recipe Name -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Recipe Name *</label>
+                            <input type="text" id="recipeName" required placeholder="e.g., Grandma's Secret Spaghetti" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                        </div>
+                        
+                        <!-- Category and Image URL -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Category *</label>
+                                <select id="recipeCategory" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                                    <option value="Main Dish" style="color: var(--dark);">Main Dish</option>
+                                    <option value="Dessert" style="color: var(--dark);">Dessert</option>
+                                    <option value="Drinks" style="color: var(--dark);">Drinks</option>
+                                    <option value="Appetizer" style="color: var(--dark);">Appetizer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Image URL</label>
+                                <input type="url" id="recipeImage" placeholder="https://..." style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            </div>
+                        </div>
+                        
+                        <!-- Ingredients -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Ingredients * (one per line)</label>
+                            <textarea id="recipeIngredients" rows="6" required placeholder="2 cups flour&#10;1 cup sugar&#10;3 eggs" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);"></textarea>
+                        </div>
+                        
+                        <!-- Instructions -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Instructions * (one per line)</label>
+                            <textarea id="recipeInstructions" rows="6" required placeholder="Preheat oven to 350°F&#10;Mix dry ingredients" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);"></textarea>
+                        </div>
+                        
+                        <!-- Prep Time, Cook Time, Servings, Calories -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Prep Time</label>
+                                <input type="number" id="prepTime" min="0" value="15" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Cook Time</label>
+                                <input type="number" id="cookTime" min="0" value="30" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Servings</label>
+                                <input type="number" id="servings" min="1" value="4" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Calories</label>
+                                <input type="number" id="calories" min="0" value="350" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            </div>
+                        </div>
+                        
+                        <!-- YouTube Link -->
+                        <div style="margin-bottom: 30px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">YouTube Link</label>
+                            <input type="url" id="youtubeLink" placeholder="https://youtube.com/watch?v=..." style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                        </div>
+                        
+                        <!-- Info Box -->
+                        <div style="background: var(--light); border-radius: 15px; padding: 20px; margin-bottom: 30px;">
+                            <p style="color: var(--dark);"><i class="fas fa-info-circle" style="color: var(--primary);"></i> Our team will review your recipe before publishing.</p>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div style="display: flex; gap: 15px;">
+                            <button type="submit" style="flex: 1; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">
+                                <i class="fas fa-upload"></i> Submit Recipe
+                            </button>
+                            <button type="button" onclick="hideSubmitForm()" style="padding: 15px 30px; background: var(--gray); color: white; border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- About View -->
+        <div id="aboutView" style="display: none;">
+            <div class="hero">
+                <h1>About Our Team</h1>
+                <p>Meet the passionate foodies behind Food Recipe 101.</p>
+            </div>
+            
+            <!-- Our Objectives Section -->
+            <div style="background: white; border-radius: 30px; padding: 40px; margin-top: 30px; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+                    <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-bullseye" style="color: white; font-size: 1.8em;"></i>
+                    </div>
+                    <h2 style="color: var(--secondary); font-size: 2em;">Our Objectives</h2>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                    <div style="background: var(--light); border-radius: 20px; padding: 30px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; border-bottom: 4px solid var(--primary);">
+                        <div style="font-size: 3em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <h3 style="margin-bottom: 15px; color: var(--secondary);">Share Delicious Recipes</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">Create a platform where food lovers can discover, share, and celebrate diverse culinary creations from around the world.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 20px; padding: 30px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; border-bottom: 4px solid var(--primary);">
+                        <div style="font-size: 3em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 style="margin-bottom: 15px; color: var(--secondary);">Build a Community</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">Foster a supportive community where home cooks and professional chefs can connect, share experiences, and learn from each other.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 20px; padding: 30px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; border-bottom: 4px solid var(--primary);">
+                        <div style="font-size: 3em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3 style="margin-bottom: 15px; color: var(--secondary);">Make Cooking Accessible</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">Provide easy-to-follow recipes and cooking tips that make home cooking enjoyable and achievable for everyone, regardless of skill level.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 20px; padding: 30px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; border-bottom: 4px solid var(--primary);">
+                        <div style="font-size: 3em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3 style="margin-bottom: 15px; color: var(--secondary);">Inspire Creativity</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">Inspire home cooks to experiment, adapt recipes, and develop their own unique culinary creations with confidence.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MISSION SECTION -->
+            <div style="background: white; border-radius: 30px; padding: 40px; margin-top: 30px; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+                    <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-flag" style="color: white; font-size: 1.8em;"></i>
+                    </div>
+                    <h2 style="color: var(--secondary); font-size: 2em;">Our Mission</h2>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+                    <div style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; padding: 40px; color: white; text-align: center;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">
+                            <i class="fas fa-utensil-spoon"></i>
+                        </div>
+                        <h3 style="font-size: 1.8em; margin-bottom: 20px;">What We Do</h3>
+                        <p style="line-height: 1.8; font-size: 1.1em;">To empower home cooks of all skill levels with accessible, delicious, and culturally diverse recipes that bring people together around the table.</p>
+                    </div>
+                    
+                    <div style="background: var(--light); border-radius: 20px; padding: 40px; text-align: center; border: 2px solid var(--border);">
+                        <div style="font-size: 4em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3 style="font-size: 1.8em; color: var(--secondary); margin-bottom: 20px;">Our Commitment</h3>
+                        <p style="color: var(--gray); line-height: 1.8; font-size: 1.1em;">To create a supportive community where food enthusiasts can share, learn, and grow together while celebrating the joy of cooking.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VISION SECTION -->
+            <div style="background: white; border-radius: 30px; padding: 40px; margin-top: 30px; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+                    <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-eye" style="color: white; font-size: 1.8em;"></i>
+                    </div>
+                    <h2 style="color: var(--secondary); font-size: 2em;">Our Vision</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+                    <div style="background: var(--light); border-radius: 20px; padding: 40px; text-align: center; border: 2px solid var(--border); flex: 0 1 400px;">
+                        <div style="font-size: 4em; color: var(--primary); margin-bottom: 20px;">
+                            <i class="fas fa-globe-asia"></i>
+                        </div>
+                        <h3 style="font-size: 1.8em; color: var(--secondary); margin-bottom: 20px;">Global Reach</h3>
+                        <p style="color: var(--gray); line-height: 1.8; font-size: 1.1em;">To become the world's most trusted and beloved recipe platform, connecting food lovers across all cultures and continents.</p>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; padding: 40px; color: white; text-align: center;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 style="font-size: 1.8em; margin-bottom: 20px;">Innovation</h3>
+                        <p style="line-height: 1.8; font-size: 1.1em;">To continuously innovate and enhance the cooking experience through technology, making recipe discovery and sharing seamless.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Meet Our Team Section -->
+            <div style="background: white; border-radius: 30px; padding: 40px; margin-top: 30px; width: 100%; overflow: hidden;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
+                    <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-users" style="color: white; font-size: 1.8em;"></i>
+                    </div>
+                    <h2 style="color: var(--secondary); font-size: clamp(1.5em, 5vw, 2em); margin: 0;">Meet Our Team</h2>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%;">
+                    <!-- Team member 1 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="RIMAS.jpg" alt="Alexis S. Rimas" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Lead Developer</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Rimas, Alexis S.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-code"></i> Full-stack wizard</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 2 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="LIMJOCO.jpg" alt="Kenji J. Limjoco" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Backend Dev</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Limjoco, Kenji J.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-database"></i> Database master</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 3 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="JAVIERT.jpg" alt="Terence R. Javier" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Project Manager</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Javier, Terence R.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-tasks"></i> Keeping us on track</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 4 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="erik.png" alt="Erik Paul R. Sandoval" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Content Lead</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Sandoval, Erik Paul R.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-pen"></i> Recipe curator</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 5 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="TELIN.jpg" alt="Ryan Telin" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Content</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Telin, Ryan</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-camera"></i> Media specialist</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 6 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="GOCO.jpg" alt="Weslie N. Goco" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Content</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Goco, Weslie N.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-camera-retro"></i> Food photographer</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 7 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="HERNANDEZ.jpg" alt="Herby Bren V. Hernandez" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Content</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Hernandez, Herby Bren V.</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-utensil-spoon"></i> Recipe tester</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Team member 8 -->
+                    <div style="background: var(--light); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: transform 0.3s, box-shadow 0.3s; border: 2px solid var(--border); height: 100%; min-width: 0; flex-wrap: wrap; justify-content: center; text-align: center;">
+                        <div style="width: 90px; height: 90px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--accent); overflow: hidden; flex-shrink: 0;">
+                            <img src="hhh.jpg" alt="Mckerby Raymudo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size: 2.5em; color: white;\'></i>'">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 8px; font-weight: 600; white-space: normal;">Content</span>
+                            <h3 style="margin: 0; color: var(--secondary); font-size: 1.1em; font-weight: 700; word-wrap: break-word;">Raymudo, Mckerby</h3>
+                            <p style="color: var(--gray); font-size: 0.9em; margin: 5px 0 0; word-wrap: break-word;"><i class="fas fa-comments"></i> Community manager</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login View -->
+        <div id="loginView" style="display: none; max-width: 500px; margin: 0 auto;">
+            <div style="background: white; border-radius: 30px; padding: 40px; box-shadow: var(--shadow);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 3em; color: var(--primary);"><i class="fas fa-utensils"></i></div>
+                    <h2 style="color: var(--dark);">Welcome Back!</h2>
+                    <p style="color: var(--gray);">Sign in to save recipes and interact</p>
+                </div>
+                
+                <div id="signInSection">
+                    <form onsubmit="handleSignIn(event)">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
+                            <input type="email" id="loginEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
+                            <div style="position: relative;">
+                                <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; padding-right: 50px; background: white; color: var(--dark);">
+                                <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('loginPassword', this)">👁️</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Remember Me and Forgot Password Row -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dark);">
+                                <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                <span>Remember me</span>
+                            </label>
+                            <a onclick="showForgotPassword()" style="color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none;">Forgot Password?</a>
+                        </div>
+                        
+                        <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 20px;">Sign In</button>
+                    </form>
+                    <p style="text-align: center; color: var(--dark);">Don't have an account? <a onclick="toggleAuth(true)" style="color: var(--primary); font-weight: 600; cursor: pointer;">Sign Up</a></p>
+                </div>
+
+                <div id="signUpSection" style="display: none;">
+                    <form onsubmit="handleSignUp(event)">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Full Name</label>
+                            <input type="text" id="signUpName" placeholder="Enter your name" required minlength="3" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
+                            <input type="email" id="signUpEmail" placeholder="name@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            <small id="emailError" style="color: var(--danger);"></small>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
+                            <div style="position: relative;">
+                                <input type="password" id="signUpPassword" placeholder="8-20 chars with uppercase, number & special" required minlength="8" maxlength="20" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; padding-right: 50px; background: white; color: var(--dark);">
+                                <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('signUpPassword', this)">👁️</span>
+                            </div>
+                            <small id="passwordError" style="color: var(--danger);"></small>
+                        </div>
+                        <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 20px;">Create Account</button>
+                    </form>
+                    <p style="text-align: center; color: var(--dark);">Already have an account? <a onclick="toggleAuth(false)" style="color: var(--primary); font-weight: 600; cursor: pointer;">Sign In</a></p>
+                </div>
+
+                <!-- Forgot Password Section -->
+                <div id="forgotPasswordSection" style="display: none;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 3em; color: var(--primary);"><i class="fas fa-key"></i></div>
+                        <h3 style="color: var(--dark);">Reset Password</h3>
+                        <p style="color: var(--gray);">Enter your email to receive reset instructions</p>
+                    </div>
+                    <form onsubmit="handleForgotPassword(event)">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
+                            <input type="email" id="resetEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);">
+                        </div>
+                        <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 15px;">Send Reset Link</button>
+                        <button type="button" onclick="hideForgotPassword()" style="width: 100%; padding: 15px; background: var(--light); color: var(--dark); border: 2px solid var(--border); border-radius: 15px; font-weight: 600; cursor: pointer;">Back to Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile View -->
+        <div id="profileView">
+            <div class="profile-header">
+                <div class="profile-avatar-large" onclick="editAvatar()">
+                    <i class="fas fa-user" id="profileAvatar"></i>
+                </div>
+                <h2 id="profileDisplayName">Welcome, Foodie!</h2>
+                <p><i class="fas fa-envelope"></i> <span id="profileEmail">user@example.com</span></p>
+                <p><i class="fas fa-calendar"></i> Member since <span id="profileJoinDate">2026</span></p>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+
+            <!-- container for saved recipes - start -->
+            <div class="profile-stats-grid" style="grid-template-columns: 1fr;">
+                <div class="stat-card">
+                    <div class="stat-number-large" id="profileSavedCount">0</div>
+                    <div class="stat-label">Saved Recipes</div>
+                </div>
+            </div>
+            <!-- container for saved recipes - end -->
+
+            <div class="profile-info-edit">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-id-card"></i> Personal Information</h3>
+                
+                <div class="info-row" id="nameRow">
+                    <span class="info-label">Full Name:</span>
+                    <span class="info-value" id="displayNameValue">John Doe</span>
+                    <button class="edit-btn" onclick="editField('name')"><i class="fas fa-pen"></i> Edit</button>
+                </div>
+                
+                <div class="info-row" id="emailRow">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value" id="displayEmailValue">john@gmail.com</span>
+                    <button class="edit-btn" onclick="editField('email')"><i class="fas fa-pen"></i> Edit</button>
+                </div>
+                
+                <div class="info-row" id="bioRow">
+                    <span class="info-label">Bio:</span>
+                    <span class="info-value" id="displayBioValue">Food lover and home cook</span>
+                    <button class="edit-btn" onclick="editField('bio')"><i class="fas fa-pen"></i> Edit</button>
+                </div>
+                
+                <div class="info-row" id="locationRow">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value" id="displayLocationValue">Philippines</span>
+                    <button class="edit-btn" onclick="editField('location')"><i class="fas fa-pen"></i> Edit</button>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="tab-btn active" onclick="switchTab('saved')"><i class="fas fa-bookmark"></i> Saved Recipes</button>
+                <button class="tab-btn" onclick="switchTab('reviews')"><i class="fas fa-star"></i> My Reviews</button>
+                <button class="tab-btn" onclick="switchTab('activity')"><i class="fas fa-history"></i> Recent Activity</button>
+            </div>
+
+            <div id="savedTab" class="tab-content active">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-heart" style="color: var(--danger);"></i> My Saved Recipes</h3>
+                <div id="savedRecipesGrid" class="saved-recipes-grid"></div>
+                <div id="noSavedMessage" style="text-align: center; padding: 50px; color: var(--gray); display: none;">
+                    <i class="fas fa-heart" style="font-size: 3em; margin-bottom: 15px;"></i>
+                    <p>You haven't saved any recipes yet. Start exploring!</p>
+                    <button onclick="showHome()" style="margin-top: 20px; padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: 30px; cursor: pointer;">Browse Recipes</button>
+                </div>
+            </div>
+
+            <div id="reviewsTab" class="tab-content">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-star" style="color: #ffc107;"></i> My Reviews</h3>
+                <div id="userReviewsContainer"></div>
+                <div id="noReviewsMessage" style="text-align: center; padding: 50px; color: var(--gray);">
+                    <i class="fas fa-comment" style="font-size: 3em; margin-bottom: 15px;"></i>
+                    <p>You haven't written any reviews yet.</p>
+                </div>
+            </div>
+
+            <div id="activityTab" class="tab-content">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-history"></i> Recent Activity</h3>
+                <div id="activityContainer"></div>
+                <div id="noActivityMessage" style="text-align: center; padding: 50px; color: var(--gray);">
+                    <i class="fas fa-clock" style="font-size: 3em; margin-bottom: 15px;"></i>
+                    <p>No recent activity.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipe Modal -->
+    <div id="recipeModal"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Recipe saved!</span>
+    </div>
+
+    <footer style="background: var(--secondary); color: white; text-align: center; padding: 20px; margin-top: 50px;">
+        <p>© 2026 · Food Recipe 101</p>
+    </footer>
+
+<!-- JAVASCRIPT NATONG PART NATO -->
+    <script src="01 - MAIN - JAVASCRIPT.js"></script>
+    <script src="02 - FOOD RECIPES INFOS - JAVASCRIPT.js"></script>
+</body>
+</html>
