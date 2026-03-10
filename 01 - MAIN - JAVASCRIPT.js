@@ -17,6 +17,62 @@ let userProfile = {
     joinDate: new Date().getFullYear()
 };
 
+// ============================================
+// AUTH STATE OBSERVER - KEEPS USER LOGGED IN
+// ============================================
+
+// Check auth state on page load
+firebase.auth().onAuthStateChanged(async function(user) {
+    console.log("🔥 Auth state changed:", user ? "Logged in" : "Logged out");
+    
+    if (user) {
+        // User is logged in - restore session
+        console.log("✅ User is logged in:", user.email);
+        
+        // Get user data from Firestore
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const userData = userDoc.data();
+            
+            currentUser = {
+                uid: user.uid,
+                name: user.displayName || userData.name,
+                email: user.email,
+                ...userData
+            };
+            
+            // Load saved recipes
+            const savedSnapshot = await db.collection('users').doc(user.uid)
+                .collection('savedRecipes').get();
+            
+            savedRecipes = [];
+            savedSnapshot.forEach(doc => {
+                savedRecipes.push(parseInt(doc.id));
+            });
+            
+            // Update UI
+            const navBtn = document.getElementById('navLoginBtn');
+            navBtn.innerHTML = '<i class="fas fa-user"></i> ' + currentUser.name.split(' ')[0];
+            navBtn.onclick = function() { showProfile(); };
+            
+            console.log("✅ User session restored:", currentUser.name);
+            
+        } catch (error) {
+            console.error("Error restoring session:", error);
+        }
+    } else {
+        // User is logged out
+        console.log("ℹ️ No user logged in");
+        currentUser = null;
+        savedRecipes = [];
+        
+        // Update UI for logged out state
+        const navBtn = document.getElementById('navLoginBtn');
+        navBtn.innerHTML = '<i class="fas fa-user"></i> Login';
+        navBtn.onclick = function() { showLoginPage(); };
+    }
+});
+
 // Load user from session storage
 function loadUserFromStorage() {
     const savedUser = sessionStorage.getItem('currentUser');
@@ -126,7 +182,7 @@ function showServices() {
     hideAll();
     document.getElementById('servicesView').style.display = 'block';
     document.getElementById('submitRecipeFormContainer').style.display = 'none';
-    displayQuestions();
+    displayQuestions(); // This will now fetch from Firebase
     scrollToTop();
 }
 
@@ -1829,7 +1885,8 @@ function handleRecipeSubmission(event) {
 // Handles user questions and support replies
 // ============================================
 
-function submitFAQQuestion(event) {
+// REPLACE with Firebase version
+async function submitFAQQuestion(event) {
     event.preventDefault();
     
     if (!currentUser) {
@@ -1841,63 +1898,78 @@ function submitFAQQuestion(event) {
     const name = document.getElementById('faqName').value;
     const email = document.getElementById('faqEmail').value;
     const question = document.getElementById('faqQuestion').value;
+
+    console.log("📝 Question data:", { name, email, question }); // ADD THIS
     
-    const newQuestion = {
-        id: Date.now(),
-        name: name,
-        email: email,
-        question: question,
-        date: new Date().toLocaleString(),
-        user: currentUser.name,
-        status: 'pending',
-        replies: []
-    };
+    // Show loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Submitting...';
+    submitBtn.disabled = true;
     
-    if (!window.askedQuestions) window.askedQuestions = [];
-    window.askedQuestions.push(newQuestion);
+    // Submit to Firebase
+    const result = await firebaseSubmitQuestion(name, email, question);
     
-    sessionStorage.setItem('askedQuestions', JSON.stringify(window.askedQuestions));
-    
-    const faqForm = document.getElementById('faqForm');
-    faqForm.innerHTML = `
-        <div style="text-align: center; padding: 30px; background: var(--success); color: white; border-radius: 15px;">
-            <i class="fas fa-check-circle" style="font-size: 3em;"></i>
-            <h3>Question Submitted!</h3>
-            <p>Thank you! Our team will answer within 24-48 hours.</p>
-            <button onclick="resetFAQForm()" style="margin-top: 20px; padding: 10px 25px; background: white; color: var(--success); border: none; border-radius: 30px; cursor: pointer;">Ask Another</button>
-        </div>
-    `;
-    
-    displayQuestions();
-    
-    showToast('Question submitted!', 'success');
-    addActivity('Asked: ' + question.substring(0, 50) + '...', 'fa-question');
+    if (result.success) {
+        // Show success message
+        const faqForm = document.getElementById('faqForm');
+        faqForm.innerHTML = `
+            <div style="text-align: center; padding: 30px; background: var(--success); color: white; border-radius: 15px;">
+                <i class="fas fa-check-circle" style="font-size: 3em;"></i>
+                <h3>Question Submitted!</h3>
+                <p>Thank you! Our team will answer within 24-48 hours.</p>
+                <button onclick="resetFAQForm()" style="margin-top: 20px; padding: 10px 25px; background: white; color: var(--success); border: none; border-radius: 30px; cursor: pointer;">Ask Another</button>
+            </div>
+        `;
+        
+        // Refresh questions display
+        await displayQuestions();
+        
+        showToast('Question submitted!', 'success');
+        addActivity('Asked: ' + question.substring(0, 50) + '...', 'fa-question');
+    } else {
+        showToast('Error: ' + result.error, 'error');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
 }
 
 function resetFAQForm() {
+    if (!currentUser) {
+        showToast('Please login to ask a question!', 'error');
+        showLoginPage();
+        return;
+    }
+    
     const faqForm = document.getElementById('faqForm');
     faqForm.innerHTML = `
         <div style="display: grid; gap: 15px; grid-template-columns: 1fr 1fr;">
-            <input type="text" id="faqName" placeholder="Your Name" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
-            <input type="email" id="faqEmail" placeholder="Your Email" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
+            <input type="text" id="faqName" placeholder="Your Name" value="${currentUser.name}" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
+            <input type="email" id="faqEmail" placeholder="Your Email" value="${currentUser.email}" required style="width: 100%; padding: 15px; border: none; border-radius: 15px;">
         </div>
         <textarea id="faqQuestion" rows="4" placeholder="Type your question..." required style="width: 100%; padding: 15px; border: none; border-radius: 15px; margin: 15px 0;"></textarea>
         <button type="submit" style="padding: 15px 30px; background: white; color: var(--primary); border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">Submit Question</button>
     `;
+    
+    // Add submit event listener
+    document.getElementById('faqForm').onsubmit = submitFAQQuestion;
 }
 
-function displayQuestions() {
+// REPLACE with Firebase version
+// REPLACE with this version
+async function displayQuestions() {
     const container = document.getElementById('questionsContainer');
     const noQuestionsMsg = document.getElementById('noQuestionsMessage');
     
     if (!container) return;
     
-    const savedQuestions = sessionStorage.getItem('askedQuestions');
-    if (savedQuestions) {
-        window.askedQuestions = JSON.parse(savedQuestions);
-    }
+    // Show loading
+    container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading questions...</div>';
     
-    if (!window.askedQuestions || window.askedQuestions.length === 0) {
+    // Get questions from Firebase
+    const result = await firebaseGetQuestions();
+    
+    if (!result.success || !result.data || result.data.length === 0) {
         container.innerHTML = '';
         noQuestionsMsg.style.display = 'block';
         return;
@@ -1906,53 +1978,123 @@ function displayQuestions() {
     noQuestionsMsg.style.display = 'none';
     container.innerHTML = '';
     
-    const sortedQuestions = [...window.askedQuestions].reverse();
+    // Check if current user is admin
+    const isAdmin = await isUserAdmin();
     
-    sortedQuestions.forEach(q => {
+    result.data.forEach(q => {
         const questionCard = document.createElement('div');
+        questionCard.id = `question-${q.id}`;
         questionCard.style.background = 'var(--light)';
         questionCard.style.borderRadius = '20px';
         questionCard.style.padding = '25px';
         questionCard.style.marginBottom = '20px';
         questionCard.style.border = '2px solid var(--border)';
         
+        // Question section
         let html = `
             <div style="display: flex; gap: 15px; margin-bottom: ${q.replies && q.replies.length > 0 ? '20px' : '0'};">
                 <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2em;">
-                    ${q.user ? q.user[0].toUpperCase() : 'U'}
+                    ${q.name ? q.name[0].toUpperCase() : 'U'}
                 </div>
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <strong style="color: var(--dark);">${q.user || 'Anonymous'}</strong>
+                        <strong style="color: var(--dark);">${q.name || 'Anonymous'}</strong>
                         <span style="color: var(--gray); font-size: 0.85em;">${q.date}</span>
                     </div>
                     <p style="color: var(--dark); margin-bottom: 10px;">${q.question}</p>
-                    <span style="background: ${q.status === 'answered' ? 'var(--success)' : 'var(--primary)'}; color: white; padding: 3px 12px; border-radius: 20px; font-size: 0.8em;">
-                        ${q.status === 'answered' ? '✓ Answered' : '⏳ Pending'}
-                    </span>
+                <span style="background: ${q.status === 'answered' ? 'var(--success)' : 'var(--primary)'}; color: white; padding: 3px 12px; border-radius: 20px; font-size: 0.8em;">
+                    ${q.status === 'answered' ? '✓ Answered' : '⏳ Pending'}
+                </span>
                 </div>
             </div>
         `;
         
-        if (q.replies && q.replies.length > 0) {
-            html += `<div style="margin-left: 65px; margin-top: 15px;">`;
-            q.replies.forEach(reply => {
-                html += `
-                    <div style="background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--primary);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <strong style="color: var(--primary);"><i class="fas fa-headset"></i> Support Team</strong>
-                            <span style="color: var(--gray); font-size: 0.8em;">${reply.date}</span>
+// Replies section
+// This part should look like:
+q.replies.forEach(reply => {
+    html += `
+        <div style="background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <strong style="color: var(--primary);"><i class="fas fa-headset"></i> ${reply.supportName || 'Support Team'}</strong>
+                <span style="color: var(--gray); font-size: 0.8em;">${reply.date}</span>
+            </div>
+            <p style="color: var(--dark);">${reply.message || reply}</p>  <!-- ← Make sure message shows -->
+        </div>
+    `;
+});
+        
+        // Reply form for admins (only show if not answered yet)
+        if (isAdmin && q.status !== 'answered') {
+            html += `
+                <div style="margin-left: 65px; margin-top: 15px;" id="replyForm-${q.id}">
+                    <div style="background: white; border-radius: 15px; padding: 15px;">
+                        <textarea id="replyInput-${q.id}" rows="2" placeholder="Type your reply..." style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 10px; margin-bottom: 10px;"></textarea>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="submitReply('${q.id}')" style="padding: 8px 20px; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer;">
+                                <i class="fas fa-paper-plane"></i> Send Reply
+                            </button>
                         </div>
-                        <p style="color: var(--dark);">${reply.message}</p>
                     </div>
-                `;
-            });
-            html += `</div>`;
+                </div>
+            `;
         }
         
         questionCard.innerHTML = html;
         container.appendChild(questionCard);
     });
+}
+
+
+// SUBMIT A REPLY
+// REPLACE with this fixed version
+async function submitReply(questionId) {
+    event.preventDefault();  // ← THIS PREVENTS PAGE RELOAD!
+    event.stopPropagation(); // ← Also prevents bubbling
+    
+    console.log("🚀 Submitting reply for question:", questionId);
+    
+    const replyInput = document.getElementById(`replyInput-${questionId}`);
+    if (!replyInput) {
+        console.log("❌ Reply input not found");
+        return;
+    }
+    
+    const reply = replyInput.value.trim();
+    console.log("📝 Reply text:", reply);
+    
+    if (!reply) {
+        showToast('Please type a reply!', 'error');
+        return;
+    }
+    
+    // Get the button that was clicked
+    const replyBtn = event.target.tagName === 'BUTTON' ? event.target : event.target.closest('button');
+    if (!replyBtn) return;
+    
+    // Show loading
+    const originalText = replyBtn.innerHTML;
+    replyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    replyBtn.disabled = true;
+    
+    try {
+        // Submit to Firebase
+        const result = await firebaseAddReply(questionId, reply);
+        
+        if (result.success) {
+            showToast('Reply sent!', 'success');
+            replyInput.value = ''; // Clear input
+            await displayQuestions(); // Refresh the questions
+        } else {
+            showToast('Error: ' + result.error, 'error');
+            replyBtn.innerHTML = originalText;
+            replyBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error("❌ Error in submitReply:", error);
+        showToast('Error sending reply', 'error');
+        replyBtn.innerHTML = originalText;
+        replyBtn.disabled = false;
+    }
 }
 
 function showReplyForm(questionId) {
@@ -1991,9 +2133,10 @@ function submitReply(questionId) {
 }
 
 window.addEventListener('load', function() {
-    const savedQuestions = sessionStorage.getItem('askedQuestions');
-    if (savedQuestions) {
-        window.askedQuestions = JSON.parse(savedQuestions);
+    initializeSearch();
+    // Load questions from Firebase when services page loads
+    if (document.getElementById('servicesView').style.display === 'block') {
+        displayQuestions();
     }
 });
 
@@ -2438,7 +2581,8 @@ function resetForgotPassword() {
     hideForgotPassword();
 }
 
-function handleSignUp(event) {
+// REPLACE WITH THIS FIREBASE VERSION
+async function handleSignUp(event) {
     event.preventDefault();
     
     const name = document.getElementById('signUpName').value.trim();
@@ -2452,98 +2596,65 @@ function handleSignUp(event) {
         return;
     }
     
-    const newUser = {
-        name: name,
-        email: email,
-        password: password
-    };
-    
-    let registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    
-    if (registeredUsers.some(user => user.email === email)) {
-        showToast('Email already registered!', 'error');
-        return;
+    try {
+        // Create user in Firebase
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update profile with name
+        await user.updateProfile({
+            displayName: name
+        });
+        
+        // Create user document in Firestore
+        await db.collection('users').doc(user.uid).set({
+            name: name,
+            email: email,
+            bio: 'Food lover and home cook',
+            location: 'Philippines',
+            joinDate: new Date().toISOString(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('✓ Registration successful! Please login.', 'success');
+        
+        // Clear form
+        document.getElementById('signUpName').value = '';
+        document.getElementById('signUpEmail').value = '';
+        document.getElementById('signUpPassword').value = '';
+        
+        // Switch to sign in
+        toggleAuth(false);
+        
+    } catch (error) {
+        console.error("Sign up error:", error);
+        showToast(error.message, 'error');
     }
-    
-    registeredUsers.push(newUser);
-    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
-    
-    showToast('✓ Registration successful! Please login.', 'success');
-    
-    document.getElementById('signUpName').value = '';
-    document.getElementById('signUpEmail').value = '';
-    document.getElementById('signUpPassword').value = '';
-    
-    document.getElementById('signUpSection').style.display = 'none';
-    document.getElementById('signInSection').style.display = 'block';
-    document.getElementById('forgotPasswordSection').style.display = 'none';
-    
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-    
-    document.getElementById('rememberMe').checked = false;
 }
 
-function handleSignIn(event) {
+// REPLACE WITH THIS SIMPLIFIED VERSION
+async function handleSignIn(event) {
     event.preventDefault();
     
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
     const rememberMe = document.getElementById('rememberMe').checked;
     
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const user = registeredUsers.find(u => u.email === email);
-    
-    if (!user) {
-        showToast('No account found with this email. Please sign up first!', 'error');
-        return;
+    try {
+        // Just sign in - the observer will handle the rest
+        await auth.signInWithEmailAndPassword(email, password);
+        
+        if (rememberMe) {
+            localStorage.setItem('rememberedUser', JSON.stringify({ email: email }));
+        }
+        
+        showToast('Login successful!', 'success');
+        showHome();
+        
+    } catch (error) {
+        console.error("Sign in error:", error);
+        showToast(error.message, 'error');
     }
-    
-    if (user.password !== password) {
-        showToast('Incorrect password!', 'error');
-        return;
-    }
-    
-    currentUser = {
-        name: user.name,
-        email: user.email
-    };
-    
-    userProfile = {
-        name: user.name,
-        email: user.email,
-        bio: 'Food lover and home cook',
-        location: 'Philippines',
-        joinDate: 2026
-    };
-    
-    if (!savedRecipes) savedRecipes = [];
-    if (!userReviews) userReviews = [];
-    if (!userActivity) userActivity = [{
-        action: 'Logged in',
-        icon: 'fa-sign-in-alt',
-        time: new Date().toLocaleString()
-    }];
-    
-    const navBtn = document.getElementById('navLoginBtn');
-    navBtn.innerHTML = '<i class="fas fa-user"></i> ' + currentUser.name;
-    navBtn.onclick = function() { showProfile(); };
-    
-    saveUserToStorage();
-    
-    if (rememberMe) {
-        localStorage.setItem('rememberedUser', JSON.stringify({
-            email: email,
-            name: currentUser.name,
-            password: password
-        }));
-        showToast('Welcome back, ' + currentUser.name + '! (Remembered)');
-    } else {
-        localStorage.removeItem('rememberedUser');
-        showToast('Welcome back, ' + currentUser.name + '!');
-    }
-    
-    showHome();
 }
 
 function checkRememberedUser() {
@@ -2586,23 +2697,35 @@ function showLoginPage() {
     checkRememberedUser();
 }
 
-function logout() {
-    currentUser = null;
-    savedRecipes = [];
-    userReviews = [];
-    userActivity = [];
-    userProfile = {};
-    
-    clearUserStorage();
-    
-    const navBtn = document.getElementById('navLoginBtn');
-    navBtn.innerHTML = '<i class="fas fa-user"></i> Login';
-    navBtn.onclick = function() { showLoginPage(); };
-    
-    clearLoginForm();
-    
-    showToast('Logged out successfully');
-    showHome();
+// REPLACE WITH THIS FIREBASE VERSION
+async function logout() {
+    try {
+        // Sign out from Firebase
+        await auth.signOut();
+        
+        // Clear local variables
+        currentUser = null;
+        savedRecipes = [];
+        userReviews = [];
+        userActivity = [];
+        userProfile = {};
+        
+        // Clear storage
+        clearUserStorage();
+        clearLoginForm();
+        
+        // Update UI - but observer will also do this
+        const navBtn = document.getElementById('navLoginBtn');
+        navBtn.innerHTML = '<i class="fas fa-user"></i> Login';
+        navBtn.onclick = function() { showLoginPage(); };
+        
+        showToast('Logged out successfully');
+        showHome();
+        
+    } catch (error) {
+        console.error("Logout error:", error);
+        showToast('Error logging out', 'error');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
