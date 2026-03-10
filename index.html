@@ -695,9 +695,44 @@
     <footer style="background: var(--secondary); color: white; text-align: center; padding: 20px; margin-top: 50px;">
         <p>© 2026 · Food Recipe 101</p>
     </footer>
+    <!-- ADD FIREBASE HERE - BEFORE your other scripts -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // Your Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBuFhj-wDHEbfkfQ_jTvjX5wbxG_V2vyNA",
+  authDomain: "food-recipe-2-38e69.firebaseapp.com",
+  projectId: "food-recipe-2-38e69",
+  storageBucket: "food-recipe-2-38e69.firebasestorage.app",
+  messagingSenderId: "66793733410",
+  appId: "1:66793733410:web:ec56dbb2e3236d9056b97b"
+};
+
+  // Initialize sFirebase
+  firebase.initializeApp(firebaseConfig);
+  
+  // Initialize services
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+// ✅ ADD THIS LINE - Set persistence to LOCAL
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+.then(() => {
+    console.log("✅ Auth persistence set to LOCAL");
+})
+.catch((error) => {
+    console.log("❌ Persistence error:", error);
+});
+  
+  console.log("✅ Firebase initialized successfully!");
+</script>
 
 <!-- JAVASCRIPT NATONG PART NATO -->
     <script src="01 - MAIN - JAVASCRIPT.js"></script>
     <script src="02 - FOOD RECIPES INFOS - JAVASCRIPT.js"></script>
+    <script src="03 - FIREBASE - FUNCTIONS.js"></script>
 </body>
 </html>
