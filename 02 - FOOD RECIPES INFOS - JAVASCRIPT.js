@@ -168,7 +168,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 875,
-        img: "01 MAIN DISH - KARE-KARE.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20KARE-KARE.jpg?raw=true",
         ingredients: [
             "1 kg Oxtail or beef chuck (boiled until tender)",
             "½ cup Peanut butter (smooth)",
@@ -248,7 +248,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 567,
-        img: "01 MAIN DISH - ADOBONG PUTI.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20ADOBONG%20PUTI.jpg?raw=true",
         ingredients: [
             "1 kg Pork belly (liempo), cut into cubes",
             "1 cup White cane vinegar (Sukang Paombong or Silver Swan)",
@@ -283,7 +283,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 389,
-        img: "01 MAIN DISH - ADOBONG PUSIT.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20ADOBONG%20PUSIT.webp?raw=true",
         ingredients: [
             "½ kg Fresh medium squid (cleaned, ink sacs reserved)",
             "⅓ cup Cane vinegar",
@@ -321,7 +321,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.6,
         reviewCount: 421,
-        img: "01 MAIN DISH - PAKSIW NA BANGUS.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20PAKSIW%20NA%20BANGUS.jpg?raw=true",
         ingredients: [
             "1 large Bangus (Milkfish), cleaned and sliced into steak cuts",
             "½ cup Cane vinegar (Sukang Paombong is best)",
@@ -360,7 +360,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 2150,
-        img: "01 MAIN DISH - BULGOGI.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20BULGOGI.webp?raw=true",
         ingredients: [
             "500g Beef sirloin or ribeye (sliced paper-thin)",
             "½ piece Asian pear (grated) or ¼ cup pear juice",
@@ -398,7 +398,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1870,
-        img: "01 MAIN DISH - BIBIMBAP.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20BIBIMBAP.jpg?raw=true",
         ingredients: [
             "2 cups Steamed white rice (warm)",
             "150g Ground beef or thinly sliced ribeye",
@@ -438,7 +438,7 @@ const recipes = [
         category: "Main Dish",
         rating: 5.0,
         reviewCount: 2340,
-        img: "01 MAIN DISH - GALBI.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20GALBI.jpg?raw=true",
         ingredients: [
             "1 kg Flanken-style beef short ribs (about ½ inch thick)",
             "½ cup Soy sauce",
@@ -476,7 +476,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1650,
-        img: "01 MAIN DISH - KIMCHI.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20KIMCHI.webp?raw=true",
         ingredients: [
             "2 cups Sour Kimchi (aged at least 2–3 weeks, chopped)",
             "250g Pork belly or shoulder (sliced into bite-sized pieces)",
@@ -513,7 +513,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 1420,
-        img: "01 MAIN DISH - JAJANG.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20JAJANG.webp?raw=true",
         ingredients: [
             "200g Chunjang (Korean black bean paste)",
             "½ cup Cooking oil (for frying the paste)",
@@ -555,7 +555,7 @@ const recipes = [
         category: "Main Dish",
         rating: 5.0,
         reviewCount: 3120,
-        img: "01 MAIN DISH - PEKING DUCK.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20PEKING%20DUCK.webp?raw=true",
         ingredients: [
             "1 whole Duck (approx. 2kg, cleaned and patted dry)",
             "2 tbsp Maltose (or honey/corn syrup)",
@@ -595,7 +595,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1980,
-        img: "01 MAIN DISH - MAPO TOFU.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20MAPO%20TOFU.jpg?raw=true",
         ingredients: [
             "400g Soft or Silken Tofu (cut into 1-inch cubes)",
             "100g Ground pork (or beef)",
@@ -635,7 +635,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 2150,
-        img: "01 MAIN DISH - KUNG PAO.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20KUNG%20PAO.webp?raw=true",
         ingredients: [
             "500g Chicken thigh (boneless, skinless, cut into 1-inch cubes)",
             "½ cup Roasted peanuts (unsalted)",
@@ -717,7 +717,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 1680,
-        img: "01 MAIN DISH - sweet and sour.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20SWEET%20AND%20SOUR.webp?raw=true",
         ingredients: [
             "500g Pork butt or shoulder (cut into 1-inch cubes)",
             "½ cup Pineapple chunks",
@@ -758,7 +758,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 2450,
-        img: "01 MAIN DISH - pad thai.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20PAD%20THAI.webp?raw=true",
         ingredients: [
             "200g Dry rice sticks (medium width)",
             "150g Shrimp (peeled and deveined)",
@@ -797,7 +797,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1890,
-        img: "01 MAIN DISH - tom yung goong.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20TOM%20YUNG%20GOONG.webp?raw=true",
         ingredients: [
             "500g Whole shrimp",
             "1 liter Water or chicken stock",
@@ -837,7 +837,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1750,
-        img: "01 MAIN DISH - green curry.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20GREEN%20CURRY.jpg?raw=true",
         ingredients: [
             "500g Chicken thigh (sliced into bite-sized pieces)",
             "2 cups Coconut milk",
@@ -874,7 +874,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1980,
-        img: "01 MAIN DISH - pad kra pao.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20PAD%20KRA%20PAO.jpg?raw=true",
         ingredients: [
             "300g Ground pork",
             "1 large handful Fresh Holy Basil leaves",
@@ -910,7 +910,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1650,
-        img: "01 MAIN DISH - massaman.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20MASSAMAN.webp?raw=true",
         ingredients: [
             "500g Beef chuck or chicken thighs",
             "2 cups Coconut milk",
@@ -948,7 +948,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 2250,
-        img: "01 MAIN DISH - beef noodle.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20BEEF%20NOODLE.webp?raw=true",
         ingredients: [
             "1 kg Beef shank or chuck",
             "500g Wide wheat noodles",
@@ -989,7 +989,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1780,
-        img: "01 MAIN DISH - lu rou fan.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20LU%20ROU%20FAN.jpg?raw=true",
         ingredients: [
             "500g Pork belly, hand-cut into small strips",
             "½ cup Fried shallots",
@@ -1029,7 +1029,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1420,
-        img: "01 MAIN DISH - three cup chicken.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20THREE%20CUP%20CHICKEN.webp?raw=true",
         ingredients: [
             "500g Chicken thighs (bone-in, skin-on)",
             "¼ cup Black sesame oil",
@@ -1063,7 +1063,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 980,
-        img: "01 MAIN DISH - oyster.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20OYSTER.jpg?raw=true",
         ingredients: [
             "10–12 Fresh small oysters, cleaned",
             "2 Eggs, lightly beaten",
@@ -1103,7 +1103,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1560,
-        img: "01 MAIN DISH - gua bao.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20GUA%20BAO.jpg?raw=true",
         ingredients: [
             "6–8 Frozen lotus leaf buns",
             "500g Pork belly, cut into ½-inch thick slabs",
@@ -1140,7 +1140,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 3250,
-        img: "01 MAIN DISH - salmon sushi.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20SALMON%20SUSHI.webp?raw=true",
         ingredients: [
             "200g Sushi-grade Atlantic salmon",
             "2 cups Sushi rice, cooked",
@@ -1201,7 +1201,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 4120,
-        img: "01 MAIN DISH - ramen.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20RAMEN.jpg?raw=true",
         ingredients: [
             "1.5kg Chicken carcasses or wings",
             "4 bundles Fresh ramen noodles",
@@ -1237,7 +1237,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 2350,
-        img: "01 MAIN DISH - tonkatsu.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20TONKATSU.webp?raw=true",
         ingredients: [
             "2 pieces Pork loin (about 2cm thick)",
             "1 cup Panko breadcrumbs",
@@ -1271,7 +1271,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 1650,
-        img: "01 MAIN DISH - okono.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20OKONO.jpg?raw=true",
         ingredients: [
             "1 cup All-purpose flour",
             "¾ cup Dashi stock, cold",
@@ -1307,7 +1307,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 1280,
-        img: "01 MAIN DISH - unagi don.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20UNAGI%20DON.webp?raw=true",
         ingredients: [
             "1 filet Prepared frozen Unagi",
             "2 cups Cooked Japanese rice, hot",
@@ -1342,7 +1342,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1420,
-        img: "01 MAIN DISH - pierogi dumplings.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20PIEROGI%20DUMPLINGS.jpg?raw=true",
         ingredients: [
             "2.5 cups All-purpose flour",
             "½ cup Warm water",
@@ -1377,7 +1377,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.7,
         reviewCount: 1650,
-        img: "01 MAIN DISH - bors.webp",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20BORS.webp?raw=true",
         ingredients: [
             "500g Beef shank or pork ribs",
             "3 medium Beets, grated",
@@ -1414,7 +1414,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1850,
-        img: "01 MAIN DISH - goulash.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20GOULASH.jpg?raw=true",
         ingredients: [
             "800g Beef shank or chuck, cubed",
             "3 large Onions, finely diced",
@@ -1488,7 +1488,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 1650,
-        img: "01 MAIN DISH - chicken kiev.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20CHICKEN%20KIEV.jpg?raw=true",
         ingredients: [
             "2 Large chicken breasts",
             "100g Unsalted butter, softened",
@@ -1523,7 +1523,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 4850,
-        img: "01 MAIN DISH - cheeseburger.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20CLASSIC%20CHEESEBURGER.webp?raw=true",
         ingredients: [
             "500g Ground beef chuck",
             "4 Slices American or Cheddar cheese",
@@ -1562,7 +1562,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 3250,
-        img: "01 MAIN DISH - bbq ribs.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20BBQ%20RIBS.webp?raw=true",
         ingredients: [
             "1 rack Pork Baby Back ribs",
             "¼ cup Yellow mustard",
@@ -1597,7 +1597,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.9,
         reviewCount: 5620,
-        img: "01 MAIN DISH - fried chicken.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20FRIED%20CHICKEN.webp?raw=true",
         ingredients: [
             "1kg Chicken pieces",
             "2 cups Buttermilk",
@@ -1633,7 +1633,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 2350,
-        img: "01 MAIN DISH - pot roast.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20POT%20ROAST.webp?raw=true",
         ingredients: [
             "1.5kg Beef Chuck Roast",
             "2 tbsp Neutral oil",
@@ -1671,7 +1671,7 @@ const recipes = [
         category: "Main Dish",
         rating: 4.8,
         reviewCount: 2150,
-        img: "01 MAIN DISH - CLAM CHOWDER.jpg",
+        img: "https://github.com/bbmo-to/food-recipe-images/blob/main/01%20MAIN%20DISH%20-%20CLAM%20CHOWDER.webp?raw=true",
         ingredients: [
             "500g Clams, chopped, juice reserved",
             "2 cups Clam juice",
@@ -2051,9 +2051,9 @@ function renderFeaturedCarousel() {
                             <img src="${dish.img}" alt="${dish.name}"
                                 style="width: 100%; height: 100%; object-fit: cover;
                                 border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"
-                                onerror="this.src='https://via.placeholder.com/250x250?text=Recipe'">
+                                onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=250&h=250'">
                         </div>
-                    </div>
+                    </div
                 </div>
 
                 <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
