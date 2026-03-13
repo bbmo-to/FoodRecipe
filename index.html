@@ -19,21 +19,38 @@
                 <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="handleSearch()">
                 <span class="search-results-badge" id="searchBadge">0</span>
             </div>
-            <ul class="nav-links">
-                <li><a onclick="showHome()"><i class="fas fa-home"></i> Home</a></li>
-                <li><a onclick="showMenu()"><i class="fas fa-book-open"></i> Recipes</a></li>
-                <li><a onclick="showServices()"><i class="fas fa-concierge-bell"></i> Services</a></li>
-                <li><a onclick="showAbout()"><i class="fas fa-users"></i> About Us</a></li>
-            </ul>
-            <button class="login-btn" id="navLoginBtn">
-                <i class="fas fa-user"></i> Login
-            </button>
+        <ul class="nav-links">
+            <li><a onclick="showHome()"><i class="fas fa-home"></i> Home</a></li>
+            <li><a onclick="showMenu()"><i class="fas fa-book-open"></i> Recipes</a></li>
+            <li><a onclick="showServices()"><i class="fas fa-concierge-bell"></i> Services</a></li>
+            <li><a onclick="showAbout()"><i class="fas fa-users"></i> About Us</a></li>
+        </ul>
+        <button class="login-btn" id="navLoginBtn" onclick="handleLoginClick()">
+            <i class="fas fa-user"></i> Login
+        </button>
         </div>
     </nav>
 
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(145deg, var(--dark) 0%, #252538 100%); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease;">
+        <div style="text-align: center; animation: loadingPulse 1.5s infinite;">
+            <div style="font-size: 4em; color: var(--primary); margin-bottom: 20px; animation: loadingSpin 2s infinite;">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <h2 style="color: var(--light); font-size: 2em; margin-bottom: 10px;">Food Recipe 101</h2>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 20px;">
+                <div style="width: 15px; height: 15px; background: var(--primary); border-radius: 50%; animation: loadingBounce 1.4s infinite ease-in-out;"></div>
+                <div style="width: 15px; height: 15px; background: var(--primary); border-radius: 50%; animation: loadingBounce 1.4s infinite ease-in-out; animation-delay: 0.2s;"></div>
+                <div style="width: 15px; height: 15px; background: var(--primary); border-radius: 50%; animation: loadingBounce 1.4s infinite ease-in-out; animation-delay: 0.4s;"></div>
+            </div>
+            <p style="color: var(--gray); margin-top: 20px; font-size: 0.9em;" id="loadingMessage">Loading your culinary experience...</p>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
     <div class="main-content">
         <!-- Home View -->
-        <div id="homeView">
+        <div id="homeView" style="display: none;">
             <!-- DISH OF THE DAY HERO SECTION -->
             <div class="hero-split" style="display: flex; border-radius: 30px; margin-bottom: 0px; overflow: hidden; color: white; box-shadow: var(--shadow);">
                 <!-- left side: original hero text -->
@@ -99,7 +116,7 @@
                         <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
                             <i class="fas fa-plus-circle" style="color: white; font-size: 2em;"></i>
                         </div>
-                        <h3>Submit Recipe</h3>
+                        <h3 style="color: black;">Submit Recipe</h3>
                         <p style="color: var(--gray);">Share your culinary creation</p>
                     </div>
                     <div id="minimizedContent-1" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
@@ -116,7 +133,7 @@
                         <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
                             <i class="fas fa-comments" style="color: white; font-size: 2em;"></i>
                         </div>
-                        <h3>Chat Bot</h3>
+                        <h3 style="color: black;">Chat Bot</h3>
                         <p style="color: var(--gray);">24/7 Support</p>
                     </div>
                     <div id="minimizedContent-2" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
@@ -133,7 +150,7 @@
                         <div style="width: 70px; height: 70px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
                             <i class="fas fa-envelope" style="color: white; font-size: 2em;"></i>
                         </div>
-                        <h3>Email Support</h3>
+                        <h3 style="color: black;">Email Support</h3>
                         <p style="color: var(--gray);">support@foodrecipe101.com</p>
                     </div>
                     <div id="minimizedContent-3" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--border);">
@@ -517,7 +534,7 @@
         </div>
 
         <!-- Login View -->
-        <div id="loginView" style="display: none; max-width: 500px; margin: 0 auto;">
+        <div id="loginView" style="display: none; width: 100%; max-width: 500px; margin: 0 auto;">
             <div style="background: white; border-radius: 30px; padding: 40px; box-shadow: var(--shadow);">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <div style="font-size: 3em; color: var(--primary);"><i class="fas fa-utensils"></i></div>
@@ -525,16 +542,17 @@
                     <p style="color: var(--gray);">Sign in to save recipes and interact</p>
                 </div>
                 
+                <!-- SIGN IN SECTION -->
                 <div id="signInSection">
                     <form onsubmit="handleSignIn(event)">
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
-                            <input type="email" id="loginEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);">
+                            <input type="email" id="loginEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);" autocomplete="email">
                         </div>
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
                             <div style="position: relative;">
-                                <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; padding-right: 50px; background: white; color: var(--dark);">
+                                <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; padding-right: 50px; background: white; color: var(--dark);" autocomplete="current-password">
                                 <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('loginPassword', this)">👁️</span>
                             </div>
                         </div>
@@ -553,21 +571,22 @@
                     <p style="text-align: center; color: var(--dark);">Don't have an account? <a onclick="toggleAuth(true)" style="color: var(--primary); font-weight: 600; cursor: pointer;">Sign Up</a></p>
                 </div>
 
+                <!-- SIGN UP SECTION -->
                 <div id="signUpSection" style="display: none;">
                     <form onsubmit="handleSignUp(event)">
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Full Name</label>
-                            <input type="text" id="signUpName" placeholder="Enter your name" required minlength="3" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            <input type="text" id="signUpName" placeholder="Enter your name" required minlength="3" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);" autocomplete="name">
                         </div>
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
-                            <input type="email" id="signUpEmail" placeholder="name@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);">
+                            <input type="email" id="signUpEmail" placeholder="name@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; background: white; color: var(--dark);" autocomplete="email">
                             <small id="emailError" style="color: var(--danger);"></small>
                         </div>
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
                             <div style="position: relative;">
-                                <input type="password" id="signUpPassword" placeholder="8-20 chars with uppercase, number & special" required minlength="8" maxlength="20" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; padding-right: 50px; background: white; color: var(--dark);">
+                                <input type="password" id="signUpPassword" placeholder="8-20 chars with uppercase, number & special" required minlength="8" maxlength="20" style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; padding-right: 50px; background: white; color: var(--dark);" autocomplete="new-password">
                                 <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('signUpPassword', this)">👁️</span>
                             </div>
                             <small id="passwordError" style="color: var(--danger);"></small>
@@ -587,7 +606,7 @@
                     <form onsubmit="handleForgotPassword(event)">
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
-                            <input type="email" id="resetEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);">
+                            <input type="email" id="resetEmail" placeholder="your.email@gmail.com" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);" autocomplete="email">
                         </div>
                         <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 15px;">Send Reset Link</button>
                         <button type="button" onclick="hideForgotPassword()" style="width: 100%; padding: 15px; background: var(--light); color: var(--dark); border: 2px solid var(--border); border-radius: 15px; font-weight: 600; cursor: pointer;">Back to Login</button>
@@ -597,7 +616,7 @@
         </div>
 
         <!-- Profile View -->
-        <div id="profileView">
+        <div id="profileView" style="display: none;">
             <div class="profile-header">
                 <div class="profile-avatar-large" onclick="editAvatar()">
                     <i class="fas fa-user" id="profileAvatar"></i>
@@ -610,76 +629,78 @@
                 </button>
             </div>
 
-            <!-- container for saved recipes - start -->
-            <div class="profile-stats-grid" style="grid-template-columns: 1fr;">
-                <div class="stat-card">
-                    <div class="stat-number-large" id="profileSavedCount">0</div>
-                    <div class="stat-label">Saved Recipes</div>
-                </div>
-            </div>
-            <!-- container for saved recipes - end -->
+    <!-- container for saved recipes - start -->
+    <div class="profile-stats-grid" style="grid-template-columns: 1fr;">
+        <div class="stat-card">
+            <div class="stat-number-large" id="profileSavedCount">0</div>
+            <div class="stat-label">Saved Recipes</div>
+        </div>
+    </div>
+    <!-- container for saved recipes - end -->
 
-            <div class="profile-info-edit">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-id-card"></i> Personal Information</h3>
-                
-                <div class="info-row" id="nameRow">
-                    <span class="info-label">Full Name:</span>
-                    <span class="info-value" id="displayNameValue">John Doe</span>
-                    <button class="edit-btn" onclick="editField('name')"><i class="fas fa-pen"></i> Edit</button>
-                </div>
-                
-                <div class="info-row" id="emailRow">
-                    <span class="info-label">Email:</span>
-                    <span class="info-value" id="displayEmailValue">john@gmail.com</span>
-                    <button class="edit-btn" onclick="editField('email')"><i class="fas fa-pen"></i> Edit</button>
-                </div>
-                
-                <div class="info-row" id="bioRow">
-                    <span class="info-label">Bio:</span>
-                    <span class="info-value" id="displayBioValue">Food lover and home cook</span>
-                    <button class="edit-btn" onclick="editField('bio')"><i class="fas fa-pen"></i> Edit</button>
-                </div>
-                
-                <div class="info-row" id="locationRow">
-                    <span class="info-label">Location:</span>
-                    <span class="info-value" id="displayLocationValue">Philippines</span>
-                    <button class="edit-btn" onclick="editField('location')"><i class="fas fa-pen"></i> Edit</button>
-                </div>
-            </div>
+    <!-- PROFILE INFO -->
+    <div class="profile-info-edit">
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-id-card"></i> Personal Information</h3>
+        
+        <div class="info-row" id="nameRow">
+            <span class="info-label">Full Name:</span>
+            <span class="info-value" id="displayNameValue">John Doe</span>
+            <button class="edit-btn" onclick="editField('name')"><i class="fas fa-pen"></i> Edit</button>
+        </div>
+        
+        <div class="info-row" id="emailRow">
+            <span class="info-label">Email:</span>
+            <span class="info-value" id="displayEmailValue">john@gmail.com</span>
+            <button class="edit-btn" onclick="editField('email')"><i class="fas fa-pen"></i> Edit</button>
+        </div>
+        
+        <div class="info-row" id="bioRow">
+            <span class="info-label">Bio:</span>
+            <span class="info-value" id="displayBioValue">Food lover and home cook</span>
+            <button class="edit-btn" onclick="editField('bio')"><i class="fas fa-pen"></i> Edit</button>
+        </div>
+        
+        <div class="info-row" id="locationRow">
+            <span class="info-label">Location:</span>
+            <span class="info-value" id="displayLocationValue">Philippines</span>
+            <button class="edit-btn" onclick="editField('location')"><i class="fas fa-pen"></i> Edit</button>
+        </div>
+    </div>
 
-            <div class="profile-tabs">
-                <button class="tab-btn active" onclick="switchTab('saved')"><i class="fas fa-bookmark"></i> Saved Recipes</button>
-                <button class="tab-btn" onclick="switchTab('reviews')"><i class="fas fa-star"></i> My Reviews</button>
-                <button class="tab-btn" onclick="switchTab('activity')"><i class="fas fa-history"></i> Recent Activity</button>
-            </div>
+    <!-- TABS AND CONTENT - MOVED OUTSIDE profile-info-edit -->
+    <div class="profile-tabs">
+        <button class="tab-btn active" onclick="switchTab('saved')"><i class="fas fa-bookmark"></i> Saved Recipes</button>
+        <button class="tab-btn" onclick="switchTab('reviews')"><i class="fas fa-star"></i> My Reviews</button>
+        <button class="tab-btn" onclick="switchTab('activity')"><i class="fas fa-history"></i> Recent Activity</button>
+    </div>
 
-            <div id="savedTab" class="tab-content active">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-heart" style="color: var(--danger);"></i> My Saved Recipes</h3>
-                <div id="savedRecipesGrid" class="saved-recipes-grid"></div>
-                <div id="noSavedMessage" style="text-align: center; padding: 50px; color: var(--gray); display: none;">
-                    <i class="fas fa-heart" style="font-size: 3em; margin-bottom: 15px;"></i>
-                    <p>You haven't saved any recipes yet. Start exploring!</p>
-                    <button onclick="showHome()" style="margin-top: 20px; padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: 30px; cursor: pointer;">Browse Recipes</button>
-                </div>
-            </div>
+    <div id="savedTab" class="tab-content active">
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-heart" style="color: var(--danger);"></i> My Saved Recipes</h3>
+        <div id="savedRecipesGrid" class="saved-recipes-grid"></div>
+        <div id="noSavedMessage" style="text-align: center; padding: 50px; color: var(--gray); display: none;">
+            <i class="fas fa-heart" style="font-size: 3em; margin-bottom: 15px;"></i>
+            <p>You haven't saved any recipes yet. Start exploring!</p>
+            <button onclick="showHome()" style="margin-top: 20px; padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: 30px; cursor: pointer;">Browse Recipes</button>
+        </div>
+    </div>
 
-            <div id="reviewsTab" class="tab-content">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-star" style="color: #ffc107;"></i> My Reviews</h3>
-                <div id="userReviewsContainer"></div>
-                <div id="noReviewsMessage" style="text-align: center; padding: 50px; color: var(--gray);">
-                    <i class="fas fa-comment" style="font-size: 3em; margin-bottom: 15px;"></i>
-                    <p>You haven't written any reviews yet.</p>
-                </div>
-            </div>
+    <div id="reviewsTab" class="tab-content">
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-star" style="color: #ffc107;"></i> My Reviews</h3>
+        <div id="userReviewsContainer"></div>
+        <div id="noReviewsMessage" style="text-align: center; padding: 50px; color: var(--gray);">
+            <i class="fas fa-comment" style="font-size: 3em; margin-bottom: 15px;"></i>
+            <p>You haven't written any reviews yet.</p>
+        </div>
+    </div>
 
-            <div id="activityTab" class="tab-content">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-history"></i> Recent Activity</h3>
-                <div id="activityContainer"></div>
-                <div id="noActivityMessage" style="text-align: center; padding: 50px; color: var(--gray);">
-                    <i class="fas fa-clock" style="font-size: 3em; margin-bottom: 15px;"></i>
-                    <p>No recent activity.</p>
-                </div>
-            </div>
+    <div id="activityTab" class="tab-content">
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-history"></i> Recent Activity</h3>
+        <div id="activityContainer"></div>
+        <div id="noActivityMessage" style="text-align: center; padding: 50px; color: var(--gray);">
+            <i class="fas fa-clock" style="font-size: 3em; margin-bottom: 15px;"></i>
+            <p>No recent activity.</p>
+        </div>
+    </div>
         </div>
     </div>
 
@@ -691,48 +712,42 @@
         <i class="fas fa-check-circle"></i>
         <span id="toastMessage">Recipe saved!</span>
     </div>
+    </div>
 
     <footer style="background: var(--secondary); color: white; text-align: center; padding: 20px; margin-top: 50px;">
         <p>© 2026 · Food Recipe 101</p>
     </footer>
     <!-- ADD FIREBASE HERE - BEFORE your other scripts -->
+ <!-- FIREBASE - MUST LOAD FIRST -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
 <script>
-  // Your Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBuFhj-wDHEbfkfQ_jTvjX5wbxG_V2vyNA",
-  authDomain: "food-recipe-2-38e69.firebaseapp.com",
-  projectId: "food-recipe-2-38e69",
-  storageBucket: "food-recipe-2-38e69.firebasestorage.app",
-  messagingSenderId: "66793733410",
-  appId: "1:66793733410:web:ec56dbb2e3236d9056b97b"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBuFhj-wDHEbfkfQ_jTvjX5wbxG_V2vyNA",
+    authDomain: "food-recipe-2-38e69.firebaseapp.com", 
+    projectId: "food-recipe-2-38e69",
+    storageBucket: "food-recipe-2-38e69.firebasestorage.app",
+    messagingSenderId: "66793733410",
+    appId: "1:66793733410:web:ec56dbb2e3236d9056b97b"
+  };
 
-  // Initialize sFirebase
   firebase.initializeApp(firebaseConfig);
-  
-  // Initialize services
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-// ✅ ADD THIS LINE - Set persistence to LOCAL
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-.then(() => {
-    console.log("✅ Auth persistence set to LOCAL");
-})
-.catch((error) => {
-    console.log("❌ Persistence error:", error);
-});
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .then(() => console.log("✅ Auth persistence set to SESSION - logs out when browser closes"))
+  .catch((error) => console.log("❌ Persistence error:", error));
   
-  console.log("✅ Firebase initialized successfully!");
+  console.log("✅ Firebase initialized");
 </script>
 
-<!-- JAVASCRIPT NATONG PART NATO -->
-    <script src="01 - MAIN - JAVASCRIPT.js"></script>
-    <script src="02 - FOOD RECIPES INFOS - JAVASCRIPT.js"></script>
-    <script src="03 - FIREBASE - FUNCTIONS.js"></script>
+<!-- LOAD IN THIS EXACT ORDER -->
+<script src="02 - FOOD RECIPES INFOS - JAVASCRIPT.js"></script>
+<script src="03 - FIREBASE - FUNCTIONS.js"></script>
+<script src="01 - MAIN - JAVASCRIPT.js"></script>
 </body>
 </html>
