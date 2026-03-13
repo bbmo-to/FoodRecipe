@@ -2037,7 +2037,7 @@ function renderFeaturedCarousel() {
                                 <span><i class="fas fa-clock" style="color: var(--accent); margin-right: 4px;"></i> ${dish.prepTime + dish.cookTime} mins</span>
                                 <span><i class="fas fa-fire" style="color: var(--accent); margin-right: 4px;"></i> ${dish.calories} cal</span>
                             </div>
-
+        
                             <button onclick="viewRecipe(${dish.id})"
                                 style="background: white; color: var(--primary); border: none;
                                 padding: 10px 20px; border-radius: 40px; font-weight: 600;
