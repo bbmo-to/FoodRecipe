@@ -360,6 +360,17 @@ window.firebaseApproveRecipe = async function(pendingId, recipeData) {
             approvedId: approvedRef.id
         });
         
+        // Send notification to the user who submitted the recipe
+        if (recipeData.submittedBy) {
+            await addNotification(recipeData.submittedBy, {
+                type: 'recipe',
+                title: '✅ Recipe Approved!',
+                message: `Your recipe "${recipeData.name}" has been approved and is now live in the community!`,
+                icon: 'fa-check-circle',
+                link: `recipe:${approvedRef.id}`
+            });
+        }
+        
         return { success: true, id: approvedRef.id };
     } catch (error) {
         return { success: false, error: error.message };
