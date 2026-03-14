@@ -4,10 +4,12 @@
 const PAGES = {
     HOME: 'home',
     MENU: 'menu',
+    COMMUNITY: 'community',
     SERVICES: 'services',
     ABOUT: 'about',
     LOGIN: 'login',
-    PROFILE: 'profile'
+    PROFILE: 'profile',
+    INBOX: 'inbox'
 };
 
 // Save current page to localStorage
@@ -135,6 +137,24 @@ function loadSavedPage() {
                     servicesView.offsetHeight;
                     servicesView.style.opacity = '1';
                     break;
+
+                case PAGES.COMMUNITY:
+                    if (currentUser) {
+                        const communityView = document.getElementById('communityView');
+                        communityView.style.display = 'block';
+                        
+                        loadCommunityRecipes();
+                        
+                        communityView.offsetHeight;
+                        communityView.style.opacity = '1';
+                    } else {
+                        // If not logged in, go to login
+                        const loginView = document.getElementById('loginView');
+                        loginView.style.display = 'block';
+                        loginView.style.opacity = '1';
+                        toggleAuth(false);
+                    }
+                    break;    
                     
                 case PAGES.ABOUT:
                     const aboutView = document.getElementById('aboutView');
@@ -151,6 +171,23 @@ function loadSavedPage() {
                     
                     aboutView.offsetHeight;
                     aboutView.style.opacity = '1';
+                    break;
+
+                case PAGES.INBOX:
+                    if (currentUser) {
+                        const inboxView = document.getElementById('inboxView');
+                        inboxView.style.display = 'block';
+                        
+                        loadInboxNotifications();
+                        
+                        inboxView.offsetHeight;
+                        inboxView.style.opacity = '1';
+                    } else {
+                        const loginView = document.getElementById('loginView');
+                        loginView.style.display = 'block';
+                        loginView.style.opacity = '1';
+                        toggleAuth(false);
+                    }
                     break;
                     
                 case PAGES.LOGIN:
@@ -256,8 +293,347 @@ function loadSavedPage() {
 }
 
 // ============================================
-// LOAD USER DATA FROM FIREBASE
+// HANDLE VERIFICATION RETURN AND AUTO-LOGIN
 // ============================================
+// Check if user just verified email
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check if this is a return from verification
+    if (urlParams.get('verified') === 'true') {
+        // Remove the parameter from URL without refreshing
+        history.replaceState({}, document.title, window.location.pathname);
+        
+        // Check if user is already verified
+        const user = auth.currentUser;
+        if (user && user.emailVerified) {
+            // User is already verified and logged in
+            showToast('✅ Email verified! Logging you in...', 'success');
+            
+            // Update UI and go to home
+            setTimeout(() => {
+                showHome();
+            }, 1500);
+        } else {
+            // Show message and wait
+            showToast('✅ Email verified! You can now log in.', 'success');
+            
+            // Close any open modal
+            const modal = document.getElementById('verificationModal');
+            if (modal) modal.style.display = 'none';
+            
+            // Go to login page
+            setTimeout(() => {
+                showLoginPage();
+            }, 2000);
+        }
+    }
+    
+    // Check if we have a verification flag in session storage
+    const justVerified = sessionStorage.getItem('justVerified');
+    if (justVerified === 'true') {
+        sessionStorage.removeItem('justVerified');
+        showToast('✅ Email verified! Logging you in...', 'success');
+        
+        // Reload user and update UI
+        const user = auth.currentUser;
+        if (user) {
+            user.reload().then(() => {
+                if (user.emailVerified) {
+                    setTimeout(() => {
+                        showHome();
+                    }, 1500);
+                }
+            });
+        }
+    }
+});
+
+// ============================================
+// SIMPLE NOTIFICATION SYSTEM
+// ============================================
+let userNotifications = [];
+let notificationsLoaded = false;
+
+// Load notifications from Firebase
+async function loadUserNotifications(userId) {
+    try {
+        console.log("📬 Loading notifications for user:", userId);
+        
+        const snapshot = await db.collection('users').doc(userId)
+            .collection('notifications')
+            .orderBy('timestamp', 'desc')
+            .limit(20)
+            .get();
+        
+        userNotifications = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            userNotifications.push({
+                id: doc.id,
+                ...data,
+                read: data.read || false
+            });
+        });
+        
+        console.log(`✅ Loaded ${userNotifications.length} notifications`);
+        notificationsLoaded = true;
+        
+        // Update notification badge
+        updateNotificationBadge();
+        
+        return userNotifications;
+    } catch (error) {
+        console.error("❌ Error loading notifications:", error);
+        return [];
+    }
+}
+
+// Update the notification badge count
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    if (!badge) return;
+    
+    const unreadCount = userNotifications.filter(n => !n.read).length;
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Toggle notifications dropdown
+function showNotificationsDropdown() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    if (!dropdown) return;
+    
+    if (dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+    } else {
+        // Close any other open dropdowns
+        dropdown.style.display = 'block';
+        renderNotificationsList();
+        
+        // Close when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', closeNotificationsOnClickOutside);
+        }, 100);
+    }
+}
+
+// Close dropdown when clicking outside
+function closeNotificationsOnClickOutside(event) {
+    const dropdown = document.getElementById('notificationsDropdown');
+    const bell = document.querySelector('.notification-bell-container');
+    
+    if (dropdown && !dropdown.contains(event.target) && !bell.contains(event.target)) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeNotificationsOnClickOutside);
+    }
+}
+
+// Render notifications in dropdown
+function renderNotificationsList() {
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
+    
+    if (userNotifications.length === 0) {
+        list.innerHTML = `
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>No notifications</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show only first 5 in dropdown
+    const recentNotifications = userNotifications.slice(0, 5);
+    
+    let html = '';
+    recentNotifications.forEach(notification => {
+        const unreadClass = notification.read ? '' : 'unread';
+        const icon = notification.icon || getNotificationIcon(notification.type);
+        const iconColor = notification.read ? 'var(--gray)' : getNotificationColor(notification.type);
+        
+        html += `
+            <div class="notification-item ${unreadClass}" onclick="handleNotificationClick('${notification.id}', '${notification.link || ''}')">
+                <div class="notification-icon" style="background: ${iconColor};">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title || 'Notification'}</div>
+                    <div class="notification-message">${notification.message || ''}</div>
+                    <div class="notification-time">${notification.date || ''}</div>
+                </div>
+                ${!notification.read ? '<span style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-left: 5px;"></span>' : ''}
+            </div>
+        `;
+    });
+    
+    if (userNotifications.length > 5) {
+        html += `
+            <div style="padding: 10px; text-align: center; border-top: 1px solid var(--border);">
+                <span style="color: var(--gray); font-size: 0.8rem;">+${userNotifications.length - 5} more</span>
+            </div>
+        `;
+    }
+    
+    list.innerHTML = html;
+}
+
+// Handle notification click
+function handleNotificationClick(notificationId, link) {
+    // Mark as read
+    markNotificationAsRead(notificationId);
+    
+    // Close dropdown
+    document.getElementById('notificationsDropdown').style.display = 'none';
+    
+    // Navigate based on link
+    if (link === 'profile') {
+        showProfile();
+    } else if (link && link.startsWith('recipe:')) {
+        const recipeId = link.split(':')[1];
+        viewRecipe(parseInt(recipeId));
+    } else if (link === 'inbox') {
+        showProfile();
+        setTimeout(() => switchTab('inbox'), 100);
+    }
+}
+
+// Mark single notification as read
+async function markNotificationAsRead(notificationId) {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        await db.collection('users').doc(user.uid)
+            .collection('notifications')
+            .doc(notificationId)
+            .update({ read: true });
+        
+        // Update local array
+        const notification = userNotifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.read = true;
+        }
+        
+        updateNotificationBadge();
+        renderNotificationsList();
+        
+    } catch (error) {
+        console.error("Error marking notification as read:", error);
+    }
+}
+
+// Mark all as read
+async function markAllNotificationsRead() {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const unreadIds = userNotifications.filter(n => !n.read).map(n => n.id);
+        
+        if (unreadIds.length === 0) {
+            showToast('No unread notifications', 'info');
+            return;
+        }
+        
+        // Batch update
+        const batch = db.batch();
+        unreadIds.forEach(id => {
+            const ref = db.collection('users').doc(user.uid)
+                .collection('notifications')
+                .doc(id);
+            batch.update(ref, { read: true });
+        });
+        
+        await batch.commit();
+        
+        // Update local array
+        userNotifications.forEach(n => n.read = true);
+        
+        updateNotificationBadge();
+        renderNotificationsList();
+        showToast('All notifications marked as read', 'success');
+        
+    } catch (error) {
+        console.error("Error marking all as read:", error);
+        showToast('Error marking notifications', 'error');
+    }
+}
+
+// Add a new notification
+async function addNotification(userId, notification) {
+    try {
+        const notificationData = {
+            ...notification,
+            read: false,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            date: new Date().toLocaleString()
+        };
+        
+        const docRef = await db.collection('users').doc(userId)
+            .collection('notifications')
+            .add(notificationData);
+        
+        console.log("✅ Notification added:", docRef.id);
+        
+        // Add to local array
+        notificationData.id = docRef.id;
+        userNotifications.unshift(notificationData);
+        
+        // Keep only last 20
+        if (userNotifications.length > 20) {
+            userNotifications = userNotifications.slice(0, 20);
+        }
+        
+        updateNotificationBadge();
+        
+        // Show a quick toast for new notification
+        showToast(`🔔 ${notification.title || 'New notification'}`, 'info');
+        
+        return { success: true, id: docRef.id };
+    } catch (error) {
+        console.error("❌ Error adding notification:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Helper functions
+function getNotificationIcon(type) {
+    const icons = {
+        'review': 'fa-star',
+        'recipe': 'fa-utensils',
+        'comment': 'fa-comment',
+        'like': 'fa-heart',
+        'follow': 'fa-user-plus',
+        'system': 'fa-bell',
+        'warning': 'fa-exclamation-triangle',
+        'success': 'fa-check-circle',
+        'welcome': 'fa-hand-wave'
+    };
+    return icons[type] || 'fa-bell';
+}
+
+function getNotificationColor(type) {
+    const colors = {
+        'review': '#ffc107',
+        'recipe': '#2a9d8f',
+        'comment': '#4ab3a6',
+        'like': '#e76f51',
+        'follow': '#264653',
+        'system': '#a0a0b0',
+        'warning': '#e76f51',
+        'success': '#2a9d8f',
+        'welcome': '#2a9d8f'
+    };
+    return colors[type] || 'var(--primary)';
+}
+
 // ============================================
 // LOAD USER DATA FROM FIREBASE
 // ============================================
@@ -315,6 +691,13 @@ async function loadUserData(userId) {
         } catch (e) {
             console.error("❌ Error loading user activities:", e);
             userActivity = [];
+        }
+
+                // Load user notifications
+        try {
+            await loadUserNotifications(userId);
+        } catch (e) {
+            console.error("❌ Error loading notifications:", e);
         }
         
         // Update profile display if on profile page
@@ -466,6 +849,27 @@ let userProfile = {
 // Saved recipes pagination
 let currentSavedPage = 1;
 const SAVED_PER_PAGE = 8;
+
+// Community recipes state
+let communityRecipes = [];
+let currentCommunityFilter = 'all';
+let currentCommunitySearch = '';
+let currentCommunityPage = 1;
+const COMMUNITY_PER_PAGE = 8;
+
+// ============================================
+// GLOBAL MODAL FUNCTIONS
+// ============================================
+// Make sure modal functions are available globally
+window.showVerificationModal = showVerificationModal;
+window.closeVerificationModal = closeVerificationModal;
+window.checkEmailVerification = checkEmailVerification;
+window.resendVerificationEmailFromModal = resendVerificationEmailFromModal;
+window.completeLoginAfterVerification = completeLoginAfterVerification; // Add this line
+
+window.showWaitingVerificationModal = showWaitingVerificationModal;
+window.showVerifiedModal = showVerifiedModal;
+window.closeVerificationModalAndDeleteUser = closeVerificationModalAndDeleteUser;
 
 // ============================================
 // EXPORT NAVIGATION FUNCTIONS TO WINDOW
@@ -686,12 +1090,72 @@ const submitBtn = event.target.querySelector('button[type="submit"]');
 };
 
 // ============================================
-// AUTH STATE OBSERVER - FIXED (NO AUTO-REDIRECT)
+// AUTH STATE OBSERVER - WITH AUTO-LOGIN AFTER VERIFICATION
 // ============================================
 firebase.auth().onAuthStateChanged(async function(user) {
     console.log("🔥 Auth state changed:", user ? "Logged in" : "Logged out");
     
     if (user) {
+        // Check if this is from verification
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.get('verified') === 'true' && user.emailVerified) {
+            // Auto-login the user - remove URL parameter
+            history.replaceState({}, document.title, window.location.pathname);
+            
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data() || {};
+                
+                currentUser = {
+                    uid: user.uid,
+                    name: user.displayName || userData.name || 'User',
+                    email: user.email,
+                    ...userData
+                };
+                
+                userProfile = {
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    bio: userData.bio || 'Food lover and home cook',
+                    location: userData.location || 'Philippines',
+                    avatar: 'fas fa-user',
+                    joinDate: userData.joinDate ? new Date(userData.joinDate).getFullYear() : new Date().getFullYear()
+                };
+                
+                await loadUserData(user.uid);
+                
+                const navBtn = document.getElementById('navLoginBtn');
+                navBtn.innerHTML = '<i class="fas fa-user"></i> ' + currentUser.name.split(' ')[0];
+                navBtn.onclick = function() { showProfile(); };
+
+                // Close verification modal if open
+                const modal = document.getElementById('verificationModal');
+                if (modal) modal.style.display = 'none';
+                
+                showToast('✅ Login successful!', 'success');
+
+                showHome();
+                return;
+            } catch (error) {
+                console.error("Error during auto-login:", error);
+            }
+        }
+        
+        // Rest of your existing auth state code...
+        if (!user.emailVerified) {
+            console.log("⚠️ User email not verified");
+            return;
+        }
+
+        // Don't reload user data if we're already in the process of logging in
+        // This prevents the login page flash
+        const justCompleted = sessionStorage.getItem('justCompleted');
+        if (justCompleted === 'true') {
+            sessionStorage.removeItem('justCompleted');
+            return;
+        }
+        
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
             const userData = userDoc.data() || {};
@@ -752,13 +1216,75 @@ firebase.auth().onAuthStateChanged(async function(user) {
     }
 });
 
+// After setting currentUser, add this line:
+updateNavForUser();
+
+// And in the logout section:
+updateNavForUser();
+
+// ============================================
+// DROPDOWN MENU FUNCTIONS
+// ============================================
+function toggleMoreDropdown() {
+    const dropdown = document.getElementById('moreDropdown');
+    dropdown.classList.toggle('show');
+    
+    // Close when clicking outside
+    if (dropdown.classList.contains('show')) {
+        setTimeout(() => {
+            document.addEventListener('click', closeDropdownOnClickOutside);
+        }, 100);
+    }
+}
+
+function closeDropdownOnClickOutside(event) {
+    const dropdown = document.getElementById('moreDropdown');
+    const moreIcon = document.querySelector('.nav-dropdown .nav-icon');
+    
+    if (dropdown && !dropdown.contains(event.target) && !moreIcon.contains(event.target)) {
+        dropdown.classList.remove('show');
+        document.removeEventListener('click', closeDropdownOnClickOutside);
+    }
+}
+
+// Update login button when user is logged in
+function updateNavForUser() {
+    const navBtn = document.getElementById('navLoginBtn');
+    if (currentUser) {
+        navBtn.innerHTML = `<i class="fas fa-user"></i> ${currentUser.name.split(' ')[0]}`;
+        navBtn.classList.add('user-logged-in');
+        navBtn.onclick = function() { showProfile(); };
+    } else {
+        navBtn.innerHTML = '<i class="fas fa-user"></i> Login';
+        navBtn.classList.remove('user-logged-in');
+        navBtn.onclick = function() { showLoginPage(); };
+    }
+}
+
+// Update inbox badge count
+function updateInboxBadge() {
+    const badge = document.getElementById('inboxBadge');
+    if (!badge) return;
+    
+    const unreadCount = userNotifications.filter(n => !n.read).length;
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Call this in your onAuthStateChanged
+
 // ============================================
 // VIEW NAVIGATION WITH SMOOTH TRANSITIONS
 // ============================================
 function hideAll() {
     forceHideToast(); // Make sure this line is included
     
-    const views = ['homeView', 'loginView', 'aboutView', 'menuView', 'profileView', 'servicesView'];
+    const views = ['homeView', 'loginView', 'aboutView', 'menuView', 'profileView', 'servicesView', 'communityView', 'inboxView'];
     views.forEach(v => {
         const el = document.getElementById(v);
         if (el) {
@@ -777,6 +1303,15 @@ function scrollToTop() {
 
 // ========== HOME VIEW ==========
 function showHome(dontSave = false) {
+    // Check if we're in verification process
+    const justVerified = sessionStorage.getItem('justVerified');
+    if (justVerified === 'true') {
+        console.log("🏠 Verification complete, allowing home view");
+        // Clear the flag so it doesn't block future home views
+        sessionStorage.removeItem('justVerified');
+        // Continue to show home
+    }
+    
     console.log("🏠 showHome called");
     
     // Fade out current view
@@ -1032,7 +1567,520 @@ function showLoginPage(dontSave = false) {
     }, 200);
 }
 
-// ========== PROFILE VIEW ==========
+// ========== INBOX VIEW ==========
+let currentInboxTab = 'all';
+
+function showInbox(dontSave = false) {
+    if (!currentUser) {
+        showToast('Please login to view your inbox!', 'error');
+        showLoginPage();
+        return;
+    }
+    
+    console.log("📬 showInbox called");
+    
+    const currentActive = document.querySelector('.main-content > div[style*="display: block"]');
+    if (currentActive) currentActive.style.opacity = '0';
+    
+    setTimeout(() => {
+        if (!dontSave) saveCurrentPage(PAGES.INBOX);
+        
+        hideAll();
+        const inboxView = document.getElementById('inboxView');
+        inboxView.style.display = 'block';
+        
+        // Load notifications
+        loadInboxNotifications();
+        
+        inboxView.offsetHeight;
+        inboxView.style.opacity = '1';
+        scrollToTop();
+    }, 200);
+}
+
+async function loadInboxNotifications() {
+    const list = document.getElementById('inboxNotificationsList');
+    const emptyState = document.getElementById('inboxEmptyState');
+    const loading = document.getElementById('inboxLoading');
+    const unreadSpan = document.getElementById('inboxTotalUnread');
+    
+    loading.style.display = 'block';
+    list.innerHTML = '';
+    emptyState.style.display = 'none';
+    
+    try {
+        // Load from Firebase if not already loaded
+        if (!notificationsLoaded || userNotifications.length === 0) {
+            await loadUserNotifications(currentUser.uid);
+        }
+        
+        loading.style.display = 'none';
+        
+        // Update unread count
+        const unreadCount = userNotifications.filter(n => !n.read).length;
+        if (unreadSpan) unreadSpan.textContent = unreadCount;
+        updateInboxBadge();
+        
+        if (userNotifications.length === 0) {
+            emptyState.style.display = 'block';
+            return;
+        }
+        
+        // Filter based on current tab
+        let filteredNotifications = [...userNotifications];
+        if (currentInboxTab === 'unread') {
+            filteredNotifications = filteredNotifications.filter(n => !n.read);
+        } else if (currentInboxTab === 'read') {
+            filteredNotifications = filteredNotifications.filter(n => n.read);
+        }
+        
+        displayInboxNotifications(filteredNotifications);
+        
+    } catch (error) {
+        console.error("Error loading inbox:", error);
+        loading.style.display = 'none';
+        list.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error loading notifications</h3>
+                <p>Please try again later</p>
+            </div>
+        `;
+    }
+}
+
+function displayInboxNotifications(notifications) {
+    const list = document.getElementById('inboxNotificationsList');
+    const emptyState = document.getElementById('inboxEmptyState');
+    
+    if (notifications.length === 0) {
+        emptyState.style.display = 'block';
+        list.innerHTML = '';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+    
+    notifications.forEach(notification => {
+        const unreadClass = notification.read ? '' : 'unread';
+        const icon = notification.icon || getNotificationIcon(notification.type);
+        const iconColor = notification.read ? 'var(--gray)' : getNotificationColor(notification.type);
+        
+        // Format date
+        let dateStr = notification.date || '';
+        if (notification.timestamp) {
+            try {
+                const date = notification.timestamp.toDate ? notification.timestamp.toDate() : new Date(notification.timestamp);
+                dateStr = date.toLocaleString();
+            } catch (e) {}
+        }
+        
+        html += `
+            <div class="notification-item ${unreadClass}" style="background: ${notification.read ? 'var(--bg-tertiary)' : 'rgba(42, 157, 143, 0.1)'}; border-radius: 15px; padding: 20px; cursor: pointer;" onclick="handleInboxNotificationClick('${notification.id}', '${notification.link || ''}')">
+                <div style="display: flex; gap: 15px; width: 100%;">
+                    <div class="notification-icon" style="background: ${iconColor}; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
+                            <h4 style="color: var(--light); margin: 0; font-size: 1.1em;">${notification.title || 'Notification'}</h4>
+                            <span style="color: var(--gray); font-size: 0.85em;">${dateStr}</span>
+                        </div>
+                        <p style="color: ${notification.read ? 'var(--gray)' : 'var(--light)'}; margin: 0 0 10px; line-height: 1.5;">${notification.message || ''}</p>
+                        <div style="display: flex; gap: 10px;">
+                            ${!notification.read ? `
+                                <button onclick="markNotificationAsRead('${notification.id}'); event.stopPropagation();" class="edit-btn" style="padding: 5px 15px;">
+                                    <i class="fas fa-check"></i> Mark Read
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteNotification('${notification.id}'); event.stopPropagation();" class="edit-btn" style="background: var(--danger); color: white; padding: 5px 15px;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    list.innerHTML = html;
+}
+
+function switchInboxTab(tab) {
+    console.log("📬 Switching inbox tab to:", tab);
+    
+    currentInboxTab = tab;
+    
+    // Update active button
+    document.querySelectorAll('#inboxView .tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (tab === 'all') {
+        document.querySelectorAll('#inboxView .tab-btn')[0].classList.add('active');
+    } else if (tab === 'unread') {
+        document.querySelectorAll('#inboxView .tab-btn')[1].classList.add('active');
+    } else if (tab === 'read') {
+        document.querySelectorAll('#inboxView .tab-btn')[2].classList.add('active');
+    }
+    
+    // Filter notifications
+    let filtered = [...userNotifications];
+    if (tab === 'unread') {
+        filtered = filtered.filter(n => !n.read);
+    } else if (tab === 'read') {
+        filtered = filtered.filter(n => n.read);
+    }
+    
+    displayInboxNotifications(filtered);
+}
+
+function handleInboxNotificationClick(notificationId, link) {
+    // Mark as read
+    markNotificationAsRead(notificationId);
+    
+    // Navigate based on link
+    if (link === 'profile') {
+        showProfile();
+    } else if (link && link.startsWith('recipe:')) {
+        const recipeId = link.split(':')[1];
+        viewRecipe(parseInt(recipeId));
+    }
+}
+
+async function deleteNotification(notificationId) {
+    if (!confirm('Delete this notification?')) return;
+    
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        await db.collection('users').doc(user.uid)
+            .collection('notifications')
+            .doc(notificationId)
+            .delete();
+        
+        // Remove from local array
+        userNotifications = userNotifications.filter(n => n.id !== notificationId);
+        
+        // Update display
+        if (document.getElementById('inboxView').style.display === 'block') {
+            loadInboxNotifications();
+        }
+        
+        updateInboxBadge();
+        showToast('Notification deleted', 'success');
+        
+    } catch (error) {
+        console.error("Error deleting notification:", error);
+        showToast('Error deleting notification', 'error');
+    }
+}
+
+async function clearAllNotifications() {
+    if (!confirm('Delete all notifications? This cannot be undone.')) return;
+    
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const snapshot = await db.collection('users').doc(user.uid)
+            .collection('notifications')
+            .get();
+        
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+        
+        // Clear local array
+        userNotifications = [];
+        
+        // Update display
+        if (document.getElementById('inboxView').style.display === 'block') {
+            loadInboxNotifications();
+        }
+        
+        updateInboxBadge();
+        showToast('All notifications cleared', 'success');
+        
+    } catch (error) {
+        console.error("Error clearing notifications:", error);
+        showToast('Error clearing notifications', 'error');
+    }
+}
+
+// Update the existing updateInboxBadge function
+function updateInboxBadge() {
+    const badge = document.getElementById('inboxBadge');
+    if (!badge) return;
+    
+    const unreadCount = userNotifications.filter(n => !n.read).length;
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ========== COMMUNITY VIEW ==========
+function showCommunity(dontSave = false) {
+    console.log("👥 showCommunity called");
+    
+    const currentActive = document.querySelector('.main-content > div[style*="display: block"]');
+    if (currentActive) currentActive.style.opacity = '0';
+    
+    setTimeout(() => {
+        if (!dontSave) saveCurrentPage('community');
+        
+        hideAll();
+        const communityView = document.getElementById('communityView');
+        communityView.style.display = 'block';
+        
+        // Reset filters/search
+        document.getElementById('communitySearch').value = '';
+        document.getElementById('communitySort').value = 'newest';
+        
+        // Load recipes
+        loadCommunityRecipes();
+        
+        communityView.offsetHeight;
+        communityView.style.opacity = '1';
+        scrollToTop();
+    }, 200);
+}
+
+async function loadCommunityRecipes() {
+    const grid = document.getElementById('communityRecipesGrid');
+    const loading = document.getElementById('communityLoading');
+    const noRecipes = document.getElementById('noCommunityRecipes');
+    const pagination = document.getElementById('communityPagination');
+    const countSpan = document.getElementById('communityRecipeCount');
+    
+    loading.style.display = 'block';
+    grid.innerHTML = '';
+    noRecipes.style.display = 'none';
+    pagination.style.display = 'none';
+    
+    try {
+        // Try Firebase first
+        if (typeof window.firebaseGetApprovedRecipes === 'function') {
+            const result = await window.firebaseGetApprovedRecipes();
+            if (result.success && result.data.length > 0) {
+                communityRecipes = result.data;
+            } else {
+                // Fallback to static recipes
+                communityRecipes = recipes.filter(r => r.id >= 40); // Show some as "community" recipes
+            }
+        } else {
+            // Fallback
+            communityRecipes = recipes.slice(0, 10); // First 10 recipes
+        }
+        
+        if (countSpan) countSpan.textContent = communityRecipes.length;
+        
+        if (communityRecipes.length === 0) {
+            noRecipes.style.display = 'block';
+        } else {
+            displayCommunityRecipes(communityRecipes);
+        }
+    } catch (error) {
+        console.error("Error loading community recipes:", error);
+        noRecipes.innerHTML = '<i class="fas fa-exclamation-triangle"></i><h3>Error loading recipes</h3><p>Please try again later.</p>';
+        noRecipes.style.display = 'block';
+    } finally {
+        loading.style.display = 'none';
+    }
+}
+
+function displayCommunityRecipes(recipesToShow) {
+    const grid = document.getElementById('communityRecipesGrid');
+    const noRecipes = document.getElementById('noCommunityRecipes');
+    const pagination = document.getElementById('communityPagination');
+    const totalRatingsSpan = document.getElementById('communityTotalRatings');
+    
+    if (!recipesToShow || recipesToShow.length === 0) {
+        noRecipes.style.display = 'block';
+        grid.innerHTML = '';
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    noRecipes.style.display = 'none';
+    
+    // Update total ratings
+    if (totalRatingsSpan) {
+        const totalReviews = recipesToShow.reduce((sum, r) => sum + (r.reviewCount || 0), 0);
+        totalRatingsSpan.textContent = totalReviews;
+    }
+    
+    const totalPages = Math.ceil(recipesToShow.length / COMMUNITY_PER_PAGE);
+    if (currentCommunityPage > totalPages) currentCommunityPage = 1;
+    
+    const start = (currentCommunityPage - 1) * COMMUNITY_PER_PAGE;
+    const end = start + COMMUNITY_PER_PAGE;
+    const pageRecipes = recipesToShow.slice(start, end);
+    
+    let html = '';
+    pageRecipes.forEach(recipe => {
+        html += `
+            <div class="recipe-card" onclick="viewRecipe(${recipe.id})">
+                <div class="save-btn ${savedRecipes.includes(recipe.id) ? 'saved' : ''}" onclick="saveRecipe(${recipe.id}); event.stopPropagation();">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <img src="${recipe.img}" alt="${recipe.name}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'">
+                <div class="recipe-info">
+                    <div class="recipe-rating">
+                        <i class="fas fa-star"></i> ${recipe.rating || 0} <span>(${recipe.reviewCount || 0} reviews)</span>
+                    </div>
+                    <div class="recipe-name">${recipe.name}</div>
+                    <div class="recipe-meta">
+                        <span><i class="fas fa-clock"></i> ${(recipe.prepTime || 0) + (recipe.cookTime || 0)} min</span>
+                        <span><i class="fas fa-fire"></i> ${recipe.calories || 0} cal</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    grid.innerHTML = html;
+    
+    // Pagination
+    if (totalPages > 1) {
+        let pagHtml = '<div class="activity-pagination">';
+        
+        // Previous button
+        pagHtml += `<button class="activity-page-btn" ${currentCommunityPage === 1 ? 'disabled' : ''} onclick="changeCommunityPage(${currentCommunityPage - 1})"><i class="fas fa-chevron-left"></i></button>`;
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            pagHtml += `<button class="activity-page-number ${i === currentCommunityPage ? 'active' : ''}" onclick="changeCommunityPage(${i})">${i}</button>`;
+        }
+        
+        // Next button
+        pagHtml += `<button class="activity-page-btn" ${currentCommunityPage === totalPages ? 'disabled' : ''} onclick="changeCommunityPage(${currentCommunityPage + 1})"><i class="fas fa-chevron-right"></i></button>`;
+        pagHtml += '</div>';
+        
+        pagination.innerHTML = pagHtml;
+        pagination.style.display = 'flex';
+    } else {
+        pagination.style.display = 'none';
+    }
+}
+
+function changeCommunityPage(newPage) {
+    currentCommunityPage = newPage;
+    
+    // Apply current filters before displaying
+    let filtered = [...communityRecipes];
+    
+    if (currentCommunityFilter !== 'all') {
+        filtered = filtered.filter(r => r.category === currentCommunityFilter);
+    }
+    
+    if (currentCommunitySearch) {
+        filtered = filtered.filter(r => 
+            r.name.toLowerCase().includes(currentCommunitySearch) ||
+            (r.ingredients && r.ingredients.some(i => i.toLowerCase().includes(currentCommunitySearch)))
+        );
+    }
+    
+    displayCommunityRecipes(filtered);
+}
+
+function filterCommunity(category) {
+    console.log(`🔍 Filtering community by: ${category}`);
+    
+    currentCommunityFilter = category;
+    currentCommunityPage = 1;
+    
+    // Update active button
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(category === 'all' ? 'all' : category.toLowerCase())) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Apply filter
+    let filtered = [...communityRecipes];
+    
+    if (category !== 'all') {
+        filtered = filtered.filter(r => r.category === category);
+    }
+    
+    if (currentCommunitySearch) {
+        filtered = filtered.filter(r => 
+            r.name.toLowerCase().includes(currentCommunitySearch) ||
+            (r.ingredients && r.ingredients.some(i => i.toLowerCase().includes(currentCommunitySearch)))
+        );
+    }
+    
+    displayCommunityRecipes(filtered);
+}
+
+function searchCommunityRecipes() {
+    currentCommunitySearch = document.getElementById('communitySearch').value.toLowerCase().trim();
+    currentCommunityPage = 1;
+    
+    let filtered = [...communityRecipes];
+    
+    if (currentCommunityFilter !== 'all') {
+        filtered = filtered.filter(r => r.category === currentCommunityFilter);
+    }
+    
+    if (currentCommunitySearch) {
+        filtered = filtered.filter(r => 
+            r.name.toLowerCase().includes(currentCommunitySearch) ||
+            (r.ingredients && r.ingredients.some(i => i.toLowerCase().includes(currentCommunitySearch)))
+        );
+    }
+    
+    displayCommunityRecipes(filtered);
+}
+
+function sortCommunityRecipes() {
+    const sortBy = document.getElementById('communitySort').value;
+    currentCommunityPage = 1;
+    
+    let filtered = [...communityRecipes];
+    
+    if (currentCommunityFilter !== 'all') {
+        filtered = filtered.filter(r => r.category === currentCommunityFilter);
+    }
+    
+    if (currentCommunitySearch) {
+        filtered = filtered.filter(r => 
+            r.name.toLowerCase().includes(currentCommunitySearch) ||
+            (r.ingredients && r.ingredients.some(i => i.toLowerCase().includes(currentCommunitySearch)))
+        );
+    }
+    
+    // Apply sort
+    switch(sortBy) {
+        case 'newest':
+            // If you have timestamps, sort by them. Otherwise random
+            filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+            break;
+        case 'oldest':
+            filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
+            break;
+        case 'rating':
+            filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            break;
+        case 'name':
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+    }
+    
+    displayCommunityRecipes(filtered);
+}
+
+
 // ========== PROFILE VIEW ==========
 function showProfile(dontSave = false) {
     if (!currentUser) {
@@ -3975,6 +5023,11 @@ function resetForgotPassword() {
 async function handleSignUp(event) {
     event.preventDefault();
     
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+    submitBtn.disabled = true;
+    
     const name = document.getElementById('signUpName').value.trim();
     const email = document.getElementById('signUpEmail').value.trim();
     const password = document.getElementById('signUpPassword').value.trim();
@@ -3983,6 +5036,8 @@ async function handleSignUp(event) {
     
     if (!passwordPattern.test(password)) {
         showToast('Password must have uppercase, lowercase, number, and special character', 'error');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         return;
     }
     
@@ -4000,21 +5055,172 @@ async function handleSignUp(event) {
             bio: 'Food lover and home cook',
             location: 'Philippines',
             joinDate: new Date().toISOString(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            emailVerified: false
         });
         
-        showToast('✓ Registration successful! Please login.', 'success');
+        // Send verification email
+        await user.sendEmailVerification({
+            url: window.location.origin + '/?verified=true',
+            handleCodeInApp: false
+        });
         
+        // Clear the sign up form
         document.getElementById('signUpName').value = '';
         document.getElementById('signUpEmail').value = '';
         document.getElementById('signUpPassword').value = '';
         
-        toggleAuth(false);
+        // Show the verification modal with WAITING state
+        showWaitingVerificationModal(email);
+        
+        // Show success toast
+        showToast(`✓ Verification email sent to ${email}!`, 'success');
+        
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         
     } catch (error) {
         console.error("Sign up error:", error);
-        showToast(error.message, 'error');
+        
+        if (error.code === 'auth/email-already-in-use') {
+            showToast('This email is already registered. Please sign in instead.', 'error');
+        } else if (error.code === 'auth/invalid-email') {
+            showToast('Please enter a valid email address.', 'error');
+        } else if (error.code === 'auth/weak-password') {
+            showToast('Password is too weak. Please use a stronger password.', 'error');
+        } else if (error.code === 'auth/unauthorized-continue-uri') {
+            showToast('Please add localhost to Firebase authorized domains', 'error');
+            console.log("Add this domain to Firebase:", window.location.hostname);
+        } else {
+            showToast(error.message, 'error');
+        }
+        
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
+}
+
+// Show waiting for verification modal (initial state)
+// Show waiting for verification modal (initial state)
+function showWaitingVerificationModal(email) {
+    currentVerificationEmail = email; // Make sure this is set FIRST
+    
+    console.log("📧 Setting verification email to:", email); // Add this for debugging
+    
+    const modal = document.getElementById('verificationModal');
+    const modalBody = modal.querySelector('div[style*="padding: 30px"]');
+    
+    modalBody.innerHTML = `
+        <div style="background: #e8f5e9; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+            <p style="color: #1e1e2f; font-size: 1.1em; margin-bottom: 10px;">We've sent a verification link to:</p>
+            <p style="background: white; padding: 12px; border-radius: 10px; font-weight: bold; color: #2a9d8f; font-size: 1.1em; word-break: break-all;">${email}</p>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; text-align: left;">
+                <div style="width: 40px; height: 40px; background: #2a9d8f; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div>
+                    <h4 style="color: #1e1e2f; margin: 0 0 5px;">Check Your Inbox</h4>
+                    <p style="color: #a0a0b0; margin: 0; font-size: 0.9em;">Click the verification link in the email</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; text-align: left;">
+                <div style="width: 40px; height: 40px; background: #e76f51; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h4 style="color: #1e1e2f; margin: 0 0 5px;">Check Spam Folder</h4>
+                    <p style="color: #a0a0b0; margin: 0; font-size: 0.9em;">If you don't see it in 5 minutes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="resendVerificationEmailFromModal()" style="flex: 1; padding: 15px; background: #f8f9fa; color: #2a9d8f; border: 2px solid #2a9d8f; border-radius: 15px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-envelope"></i> Resend
+            </button>
+            <button onclick="checkEmailVerification()" style="flex: 1; padding: 15px; background: #2a9d8f; color: white; border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i> Check Status
+            </button>
+        </div>
+        
+        <button onclick="closeVerificationModalAndDeleteUser()" style="width: 100%; margin-top: 10px; padding: 12px; background: none; border: none; color: #a0a0b0; cursor: pointer;">
+            <i class="fas fa-trash"></i> Cancel & Delete Account
+        </button>
+    `;
+    
+    modal.style.display = 'flex';
+    startVerificationCheck();
+}
+
+// Show verified modal (when email is confirmed)
+// Show verified modal (when email is confirmed)
+function showVerifiedModal(email) {
+    // If email is empty, try to get it from currentUser
+    if (!email || email === '') {
+        const user = auth.currentUser;
+        if (user) {
+            email = user.email;
+            currentVerificationEmail = email;
+        }
+    }
+    
+    const modal = document.getElementById('verificationModal');
+    const modalBody = modal.querySelector('div[style*="padding: 30px"]');
+    
+    modalBody.innerHTML = `
+        <div style="background: #e8f5e9; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+            <i class="fas fa-check-circle" style="font-size: 3em; color: #2a9d8f; margin-bottom: 10px;"></i>
+            <p style="color: #1e1e2f; font-size: 1.2em; margin-bottom: 10px;">Email Verified!</p>
+            <p style="color: #a0a0b0;">Your email has been successfully verified.</p>
+            <p style="background: white; padding: 12px; border-radius: 10px; font-weight: bold; color: #2a9d8f; font-size: 1.1em; word-break: break-all; margin-top: 15px;">
+                ${email || 'Your email'}
+            </p>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; text-align: left;">
+                <div style="width: 40px; height: 40px; background: #2a9d8f; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div>
+                    <h4 style="color: #1e1e2f; margin: 0 0 5px;">Ready to Login</h4>
+                    <p style="color: #a0a0b0; margin: 0; font-size: 0.9em;">Click the button below to complete login</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="completeLoginAfterVerification()" style="flex: 1; padding: 15px; background: #2a9d8f; color: white; border: none; border-radius: 15px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-sign-in-alt"></i> Complete Login
+            </button>
+        </div>
+        
+        <button onclick="closeVerificationModal()" style="width: 100%; margin-top: 10px; padding: 12px; background: none; border: none; color: #a0a0b0; cursor: pointer;">
+            <i class="fas fa-times"></i> Close
+        </button>
+    `;
+}
+
+async function closeVerificationModalAndDeleteUser() {
+    if (confirm('Are you sure you want to cancel? Your account will be deleted.')) {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                await user.delete();
+                console.log("🗑️ User deleted");
+                showToast('Account cancelled', 'info');
+            }
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            showToast('Error deleting account', 'error');
+        }
+    }
+    closeVerificationModal();
 }
 
 async function handleSignIn(event) {
@@ -4024,54 +5230,105 @@ async function handleSignIn(event) {
     const password = document.getElementById('loginPassword').value.trim();
     const rememberMe = document.getElementById('rememberMe').checked;
     
+    // Disable button to prevent multiple clicks
+    const signInBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = signInBtn.innerHTML;
+    signInBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+    signInBtn.disabled = true;
+    
     try {
-        await auth.signInWithEmailAndPassword(email, password);
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Check if email is verified
+        if (!user.emailVerified) {
+            // Sign them out immediately
+            await auth.signOut();
+            
+            // Show verification needed message
+            showToast('❌ Please verify your email before logging in. Check your inbox!', 'error');
+            
+            // Add resend option to the login form
+            const signInSection = document.getElementById('signInSection');
+            signInSection.innerHTML = `
+                <div style="text-align: center; padding: 20px; background: #fff3e0; border-radius: 15px; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2em; color: var(--accent);"></i>
+                    <h3 style="color: var(--accent); margin: 10px 0;">Email Not Verified</h3>
+                    <p style="color: var(--dark);">Please verify your email address before logging in.</p>
+                    <button onclick="resendVerificationEmail('${email}')" style="margin-top: 10px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 25px; cursor: pointer;">
+                        <i class="fas fa-envelope"></i> Resend Verification Email
+                    </button>
+                </div>
+                <form onsubmit="handleSignIn(event)">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
+                        <input type="email" id="loginEmail" value="${email}" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);" autocomplete="email">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
+                        <div style="position: relative;">
+                            <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; padding-right: 50px; background: white; color: var(--dark);" autocomplete="current-password">
+                            <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('loginPassword', this)">👁️</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dark);">
+                            <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                            <span>Remember me</span>
+                        </label>
+                        <a onclick="showForgotPassword()" style="color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none;">Forgot Password?</a>
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 20px;">Sign In</button>
+                </form>
+                <p style="text-align: center; color: var(--dark);">Don't have an account? <a onclick="toggleAuth(true)" style="color: var(--primary); font-weight: 600; cursor: pointer;">Sign Up</a></p>
+            `;
+            
+            // Re-enable button
+            signInBtn.innerHTML = originalText;
+            signInBtn.disabled = false;
+            return;
+        }
         
         if (rememberMe) {
-            // Only store email, NEVER password
             localStorage.setItem('rememberedUser', JSON.stringify({ email: email }));
         } else {
-            // Clear remembered user if they uncheck remember me
             localStorage.removeItem('rememberedUser');
         }
         
-        showToast('Login successful!', 'success');
+        showToast('✅ Login successful!', 'success');
+
+        // Re-enable button before navigating
+        signInBtn.innerHTML = originalText;
+        signInBtn.disabled = false;
+
+        // Go to home page
         showHome();
         
     } catch (error) {
         console.error("Sign in error:", error);
         
-        const oldError = document.querySelector('.too-many-error');
-        if (oldError) oldError.remove();
+        // Clear password field for security
+        document.getElementById('loginPassword').value = '';
         
+        // Show appropriate error message
         if (error.code === 'auth/invalid-credential' || 
             error.code === 'auth/user-not-found' || 
             error.code === 'auth/wrong-password') {
-            showToast('Incorrect email or password', 'error');
+            showToast('❌ Incorrect email or password', 'error');
         } 
         else if (error.code === 'auth/too-many-requests') {
-            showToast('Too many failed attempts. Please try again in 10 seconds.', 'error');
-            
-            const loginBtn = document.querySelector('#loginView button[type="submit"]');
-            const originalText = loginBtn.innerHTML;
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = 'Please wait 10s...';
-            
-            let secondsLeft = 10;
-            const countdown = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    loginBtn.innerHTML = `Please wait ${secondsLeft}s...`;
-                } else {
-                    clearInterval(countdown);
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = originalText;
-                }
-            }, 1000);
+            showToast('❌ Too many failed attempts. Please try again later.', 'error');
+        }
+        else if (error.code === 'auth/network-request-failed') {
+            showToast('❌ Network error. Please check your connection.', 'error');
         }
         else {
-            showToast(error.message, 'error');
+            showToast('❌ ' + error.message, 'error');
         }
+        
+        // Re-enable button
+        signInBtn.innerHTML = originalText;
+        signInBtn.disabled = false;
     }
 }
 
@@ -4150,6 +5407,69 @@ async function logout() {
         showToast('Error logging out', 'error');
     }
 }
+
+
+// Add this function to resend verification email
+// Add this function to resend verification email - FIXED VERSION
+window.resendVerificationEmail = async function(email) {
+    try {
+        showToast('Sending verification email...', 'info');
+        
+        // We need to sign in temporarily to get the user object
+        // But we don't have the password, so we need a different approach
+        
+        // Option 1: If user just signed up but not verified, they can't sign in
+        // So we need to use Firebase to send verification without signing in
+        
+        // The best approach: Use Firebase to send verification email
+        // This requires the user to be signed in, but since they're not,
+        // we'll use a workaround with the Firebase Auth API
+        
+        showToast('Please check your email for the verification link we sent during sign up. If you need a new one, please try signing up again with the same email.', 'info');
+        
+        // Alternative: Create a temporary link using Firebase Auth REST API
+        // But that's complex - simpler to just tell user to try signing up again
+        
+        // Show a helpful message
+        const signInSection = document.getElementById('signInSection');
+        signInSection.innerHTML = `
+            <div style="text-align: center; padding: 20px; background: #fff3e0; border-radius: 15px; margin-bottom: 20px;">
+                <i class="fas fa-info-circle" style="font-size: 2em; color: var(--primary);"></i>
+                <h3 style="color: var(--primary); margin: 10px 0;">Need a new verification email?</h3>
+                <p style="color: var(--dark);">Please try signing up again with the same email address. Firebase will send a new verification link if the account exists but isn't verified yet.</p>
+                <button onclick="toggleAuth(true)" style="margin-top: 10px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 25px; cursor: pointer;">
+                    <i class="fas fa-user-plus"></i> Try Signing Up Again
+                </button>
+            </div>
+            <form onsubmit="handleSignIn(event)">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Email</label>
+                    <input type="email" id="loginEmail" value="${email}" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; background: white; color: var(--dark);" autocomplete="email">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark);">Password</label>
+                    <div style="position: relative;">
+                        <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 15px; font-size: 1em; padding-right: 50px; background: white; color: var(--dark);" autocomplete="current-password">
+                        <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.3em; color: var(--gray);" onclick="togglePassword('loginPassword', this)">👁️</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dark);">
+                        <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                        <span>Remember me</span>
+                    </label>
+                    <a onclick="showForgotPassword()" style="color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none;">Forgot Password?</a>
+                </div>
+                <button type="submit" style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin-bottom: 20px;">Sign In</button>
+            </form>
+            <p style="text-align: center; color: var(--dark);">Don't have an account? <a onclick="toggleAuth(true)" style="color: var(--primary); font-weight: 600; cursor: pointer;">Sign Up</a></p>
+        `;
+        
+    } catch (error) {
+        console.error("Error sending verification:", error);
+        showToast('Error: ' + error.message, 'error');
+    }
+};
 
 // ============================================
 // RECIPE DISPLAY
@@ -4906,8 +6226,167 @@ window.handleLoginClick = function() {
     }
 }
 
+// Email Verification Modal Functions
+let currentVerificationEmail = '';
+let verificationCheckInterval = null;
 
-// DEBUG AREA
+function showVerificationModal(email) {
+    currentVerificationEmail = email;
+    document.getElementById('verificationEmailDisplay').textContent = email;
+    document.getElementById('verificationModal').style.display = 'flex';
+    
+    // Start checking for verification every 3 seconds
+    startVerificationCheck();
+}
+
+function closeVerificationModal() {
+    document.getElementById('verificationModal').style.display = 'none';
+    stopVerificationCheck();
+    // Go back to login page
+    showLoginPage();
+}
+
+function stopVerificationCheck() {
+    if (verificationCheckInterval) {
+        clearInterval(verificationCheckInterval);
+        verificationCheckInterval = null;
+    }
+}
+
+function startVerificationCheck() {
+    stopVerificationCheck(); // Clear any existing interval
+    
+    // Wait 5 seconds before first check to avoid immediate verification
+    setTimeout(() => {
+        // Now start checking every 5 seconds
+        verificationCheckInterval = setInterval(checkEmailVerification, 5000);
+    }, 5000);
+}
+
+async function checkEmailVerification() {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        // Force refresh the user's token to get latest emailVerified status
+        await user.reload();
+        
+        if (user.emailVerified) {
+            console.log("✅ Email verified!");
+            
+            // Stop checking
+            stopVerificationCheck();
+            
+            // Store that verification happened
+            sessionStorage.setItem('verifiedInBackground', 'true');
+            
+            // Only update modal if user is actively on this tab
+            if (document.visibilityState === 'visible') {
+                console.log("👤 User is active, showing verified modal NOW");
+                showVerifiedModal(currentVerificationEmail);
+            } else {
+                console.log("📱 Tab in background - will show verified modal when user returns");
+                // Don't update modal yet - wait for visibility change
+            }
+        } else {
+            // Still not verified - only show toast if user is active
+            if (document.visibilityState === 'visible') {
+                showToast('⏳ Email not verified yet. Please check your inbox.', 'info');
+            }
+        }
+    } catch (error) {
+        console.error("Error checking verification:", error);
+    }
+}
+
+async function resendVerificationEmailFromModal() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            showToast('Session expired. Please sign up again.', 'error');
+            closeVerificationModal();
+            return;
+        }
+        
+        await user.sendEmailVerification({
+            url: 'http://127.0.0.1:5500/?verified=true',
+            handleCodeInApp: false
+        });
+        
+        showToast('Verification email resent! Please check your inbox.', 'success');
+    } catch (error) {
+        console.error("Error resending verification:", error);
+        showToast('Error sending email: ' + error.message, 'error');
+    }
+}
+
+// Add this new function to complete login after user clicks "I've Verified"
+async function completeLoginAfterVerification() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            showToast('Session expired. Please sign in again.', 'error');
+            closeVerificationModal();
+            return;
+        }
+        
+        // Make sure email is still verified
+        await user.reload();
+        
+        if (!user.emailVerified) {
+            showToast('Email not verified yet. Please check your inbox.', 'error');
+            return;
+        }
+        
+        console.log("✅ User clicked 'I've Verified', completing login");
+        
+        // Close modal
+        closeVerificationModal();
+        
+        // Load user data
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data() || {};
+        
+        currentUser = {
+            uid: user.uid,
+            name: user.displayName || userData.name || 'User',
+            email: user.email,
+            ...userData
+        };
+        
+        userProfile = {
+            name: currentUser.name,
+            email: currentUser.email,
+            bio: userData.bio || 'Food lover and home cook',
+            location: userData.location || 'Philippines',
+            avatar: 'fas fa-user',
+            joinDate: userData.joinDate ? new Date(userData.joinDate).getFullYear() : new Date().getFullYear()
+        };
+        
+        // After setting currentUser
+        sessionStorage.setItem('justCompleted', 'true');
+
+        // Load user data
+        await loadUserData(user.uid);
+        
+        // Update UI
+        const navBtn = document.getElementById('navLoginBtn');
+        navBtn.innerHTML = '<i class="fas fa-user"></i> ' + currentUser.name.split(' ')[0];
+        navBtn.onclick = function() { showProfile(); };
+        
+        // Show success toast
+        showToast('✅ Welcome ' + currentUser.name + '!', 'success');
+        
+        // Go to home
+        showHome();
+        
+    } catch (error) {
+        console.error("Error completing login:", error);
+        showToast('Error logging in. Please try again.', 'error');
+    }
+}
+
+// DEBUG AREA -----------------------------------------------------------------
 
 
 // Debug helper - type debug() in console
@@ -4988,3 +6467,69 @@ window.debugReviews = function() {
     console.log("noReviewsMessage display:", document.getElementById('noReviewsMessage')?.style.display);
     console.log("userReviewsContainer content:", document.getElementById('userReviewsContainer')?.innerHTML);
 }
+
+// Add this near your other event listeners (around line 400-500)
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        console.log("👤 User returned to tab");
+        
+        // Check if verification happened while in background
+        const verifiedInBackground = sessionStorage.getItem('verifiedInBackground');
+        if (verifiedInBackground === 'true') {
+            sessionStorage.removeItem('verifiedInBackground');
+            
+            // Check if user is verified now
+            const user = auth.currentUser;
+            if (user) {
+                user.reload().then(() => {
+                    if (user.emailVerified) {
+                        console.log("✅ User verified while away, showing modal now");
+                        showVerifiedModal(currentVerificationEmail);
+                    }
+                });
+            }
+        }
+    }
+});
+
+// Add this at the VERY END of your 01 - MAIN - JAVASCRIPT.js file
+// ============================================
+// TEST FUNCTIONS - RUN IN CONSOLE
+// ============================================
+
+// Test function - run this in console to add sample notifications
+async function testNotifications() {
+    if (!currentUser) {
+        console.log("Please login first");
+        return;
+    }
+    
+    await addNotification(currentUser.uid, {
+        type: 'welcome',
+        title: '👋 Welcome!',
+        message: 'Thanks for joining Food Recipe 101!',
+        icon: 'fa-hand-wave',
+        link: 'profile'
+    });
+    
+    await addNotification(currentUser.uid, {
+        type: 'review',
+        title: '⭐ New Review',
+        message: 'Someone reviewed your recipe "Fluffy Pancakes"',
+        icon: 'fa-star',
+        link: 'recipe:1'
+    });
+    
+    await addNotification(currentUser.uid, {
+        type: 'recipe',
+        title: '✅ Recipe Approved',
+        message: 'Your recipe "Chicken Adobo" is now live!',
+        icon: 'fa-check-circle',
+        link: 'recipe:3'
+    });
+    
+    console.log("Test notifications added!");
+}
+
+// Make it available globally
+window.testNotifications = testNotifications;
