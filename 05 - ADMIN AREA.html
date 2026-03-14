@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Food Recipe 101</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="01 - MAIN - CSS.css">
+    <style>
+        .admin-container { max-width: 1400px; margin: 40px auto; padding: 20px; }
+        .admin-header { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; padding: 30px; border-radius: 20px; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-box { background: var(--bg-tertiary); padding: 20px; border-radius: 15px; text-align: center; }
+        .stat-number { font-size: 2.5em; font-weight: bold; color: var(--primary); }
+        .stat-label { color: var(--gray); font-size: 0.9em; }
+        
+        /* Tabs */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid var(--border); flex-wrap: wrap; }
+        .admin-tab { padding: 12px 25px; cursor: pointer; font-weight: 600; color: var(--gray); border-radius: 30px 30px 0 0; transition: 0.3s; }
+        .admin-tab:hover { background: var(--bg-tertiary); color: var(--light); }
+        .admin-tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: var(--bg-secondary); }
+        
+        /* Cards */
+        .admin-card { background: var(--bg-secondary); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .pending-item { background: rgba(231, 111, 81, 0.1); border-left: 4px solid var(--accent); }
+        .answered-item { background: rgba(42, 157, 143, 0.1); border-left: 4px solid var(--success); }
+        .unpublic-item { background: rgba(100, 100, 100, 0.1); border-left: 4px solid var(--gray); }
+        
+        /* Buttons */
+        .action-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; font-weight: 600; margin: 0 5px 5px 0; display: inline-flex; align-items: center; gap: 5px; }
+        .approve-btn { background: var(--success); color: white; }
+        .reject-btn { background: var(--danger); color: white; }
+        .publish-btn { background: var(--primary); color: white; }
+        .unpublish-btn { background: var(--accent); color: white; }
+        .delete-btn { background: var(--danger); color: white; }
+        .view-btn { background: var(--bg-tertiary); color: var(--light); border: 1px solid var(--border); }
+        .warning-btn { background: #ff9800; color: white; }
+        .reply-btn { background: #2196F3; color: white; }
+        
+        /* Reason Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; }
+        .reason-input { width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-tertiary); color: var(--light); margin: 15px 0; }
+        
+        /* Sub sections */
+        .sub-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .sub-tab { padding: 8px 20px; border-radius: 30px; background: var(--bg-tertiary); cursor: pointer; color: var(--gray); }
+        .sub-tab.active { background: var(--primary); color: white; }
+        
+        .user-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+        .badge-active { background: var(--success); color: white; }
+        .badge-warning { background: var(--accent); color: white; }
+        .badge-banned { background: var(--danger); color: white; }
+        
+        /* Reply section */
+        .reply-section { background: var(--bg-tertiary); padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .quick-reply { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+        .quick-reply-btn { background: var(--bg-secondary); color: var(--light); border: 1px solid var(--border); padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 0.9em; }
+        .quick-reply-btn:hover { background: var(--primary); }
+        
+        /* Status indicators */
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600; margin-left: 10px; }
+        .status-public { background: var(--success); color: white; }
+        .status-unpublic { background: var(--gray); color: white; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-left">
+            <div class="logo" onclick="location.href='01 - MAIN - HTML.html'">
+                <i class="fas fa-utensils"></i>
+                <span>Food<span class="logo-highlight">Recipe101</span></span>
+            </div>
+        </div>
+        <div class="nav-right">
+            <span style="color: var(--light); margin-right: 20px;"><i class="fas fa-shield-alt"></i> Admin Panel</span>
+            <button class="user-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+            <p>Manage users, moderate reviews, and review recipe submissions</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalStrikes">0</div>
+                <div class="stat-label">Users with Strikes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="pendingRecipes">0</div>
+                <div class="stat-label">Pending Recipes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="unansweredQuestions">0</div>
+                <div class="stat-label">Unanswered Questions</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="reportedReviews">0</div>
+                <div class="stat-label">Reported Reviews</div>
+            </div>
+        </div>
+
+        <!-- Main Tabs -->
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchMainTab('reviews')"><i class="fas fa-star"></i> Reviews</div>
+            <div class="admin-tab" onclick="switchMainTab('recipes')"><i class="fas fa-utensils"></i> Recipe Submissions</div>
+            <div class="admin-tab" onclick="switchMainTab('questions')"><i class="fas fa-question-circle"></i> Questions</div>
+            <div class="admin-tab" onclick="switchMainTab('users')"><i class="fas fa-users"></i> User Management</div>
+        </div>
+
+        <!-- ========== REVIEWS TAB (formerly Comments) ========== -->
+        <div id="reviewsTab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                <h2><i class="fas fa-star"></i> All Reviews</h2>
+                <div class="sub-tabs">
+                    <div class="sub-tab active" onclick="filterReviews('all')">All Reviews</div>
+                    <div class="sub-tab" onclick="filterReviews('reported')">Reported</div>
+                    <div class="sub-tab" onclick="filterReviews('spam')">Potential Spam</div>
+                </div>
+            </div>
+            <div id="reviewsList"></div>
+        </div>
+
+        <!-- ========== RECIPE SUBMISSIONS TAB ========== -->
+        <div id="recipesTab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                <h2><i class="fas fa-utensils"></i> Recipe Submissions</h2>
+                <div class="sub-tabs">
+                    <div class="sub-tab active" onclick="filterRecipes('pending')">⏳ Pending Review</div>
+                    <div class="sub-tab" onclick="filterRecipes('approved')">✅ Approved</div>
+                    <div class="sub-tab" onclick="filterRecipes('published')">🌍 Published</div>
+                    <div class="sub-tab" onclick="filterRecipes('rejected')">❌ Rejected</div>
+                </div>
+            </div>
+            <div id="recipesList"></div>
+        </div>
+
+        <!-- ========== QUESTIONS TAB ========== -->
+        <div id="questionsTab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                <h2><i class="fas fa-question-circle"></i> Questions</h2>
+                <div class="sub-tabs">
+                    <div class="sub-tab active" onclick="filterQuestions('unanswered')">❓ Unanswered</div>
+                    <div class="sub-tab" onclick="filterQuestions('answered')">✅ Answered</div>
+                    <div class="sub-tab" onclick="filterQuestions('unpublic')">🚫 Unpublic</div>
+                </div>
+            </div>
+            <div id="questionsList"></div>
+        </div>
+
+        <!-- ========== USER MANAGEMENT TAB ========== -->
+        <div id="usersTab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+                <h2><i class="fas fa-users"></i> User Management</h2>
+                <div class="sub-tabs">
+                    <div class="sub-tab active" onclick="filterUsers('all')">All Users</div>
+                    <div class="sub-tab" onclick="filterUsers('strikes')">⚠️ Has Strikes</div>
+                    <div class="sub-tab" onclick="filterUsers('banned')">🚫 Banned</div>
+                </div>
+            </div>
+            <div id="usersList"></div>
+        </div>
+    </div>
+
+    <!-- Reply Modal -->
+    <div id="replyModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Reply to Review</h3>
+            <p id="replyUserName" style="color: var(--gray); margin-bottom: 10px;"></p>
+            <p id="replyOriginalComment" style="background: var(--bg-tertiary); padding: 10px; border-radius: 10px; margin-bottom: 15px;"></p>
+            
+            <div class="quick-reply" style="margin-bottom: 15px;">
+                <button class="quick-reply-btn" onclick="setQuickReply('positive')">👍 Positive - "Thanks!"</button>
+                <button class="quick-reply-btn" onclick="setQuickReply('negative')">👎 Negative - "Sorry to hear that"</button>
+                <button class="quick-reply-btn" onclick="setQuickReply('neutral')">🤔 Neutral - "Thanks for feedback"</button>
+            </div>
+            
+            <textarea id="replyMessage" class="reason-input" rows="4" placeholder="Type your reply..."></textarea>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeReplyModal()">Cancel</button>
+                <button class="action-btn approve-btn" id="sendReplyBtn">Send Reply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div id="warningModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">⚠️ Send Warning to User</h3>
+            <p id="warningUserName" style="color: var(--gray); margin-bottom: 10px;"></p>
+            
+            <div class="quick-reply" style="margin-bottom: 15px;">
+                <button class="quick-reply-btn" onclick="setWarningReason('spam')">📢 Spam Detection</button>
+                <button class="quick-reply-btn" onclick="setWarningReason('repeat')">🔄 Repeated Messages</button>
+                <button class="quick-reply-btn" onclick="setWarningReason('offensive')">🤬 Offensive Language</button>
+            </div>
+            
+            <p style="margin-bottom: 10px;">Warning message:</p>
+            <textarea id="warningMessage" class="reason-input" rows="4" placeholder="Warning message..."></textarea>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 10px; color: var(--light);">
+                    <input type="checkbox" id="autoDeleteCheck"> 
+                    Automatically delete after <input type="number" id="deleteHours" value="24" min="1" max="168" style="width: 60px; padding: 5px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--light); border-radius: 5px;"> hours
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeWarningModal()">Cancel</button>
+                <button class="action-btn warning-btn" id="sendWarningBtn">Send Warning</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unpublic Question Modal -->
+    <div id="unpublicModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">🚫 Unpublic Question</h3>
+            <p style="margin-bottom: 10px;">This question will be hidden from public view.</p>
+            
+            <textarea id="unpublicReason" class="reason-input" rows="3" placeholder="Reason (will be sent to user)..."></textarea>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeUnpublicModal()">Cancel</button>
+                <button class="action-btn unpublish-btn" id="confirmUnpublicBtn">Unpublic Question</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Reject Recipe</h3>
+            <textarea id="rejectReason" class="reason-input" rows="4" placeholder="Reason for rejection..."></textarea>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeRejectModal()">Cancel</button>
+                <button class="action-btn reject-btn" id="confirmRejectBtn">Reject Recipe</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Review Modal -->
+    <div id="deleteReviewModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Delete Review</h3>
+            <p style="margin-bottom: 15px; color: var(--gray);">This will remove the review and notify the user.</p>
+            <textarea id="deleteReviewReason" class="reason-input" rows="3" placeholder="Reason for deletion..."></textarea>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeDeleteReviewModal()">Cancel</button>
+                <button class="action-btn reject-btn" id="confirmDeleteReviewBtn">Delete Review</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ban User Modal -->
+    <div id="banUserModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">Ban User</h3>
+            <p style="margin-bottom: 15px; color: var(--gray);">This user has 3 strikes. Ban them permanently?</p>
+            <textarea id="banReason" class="reason-input" rows="3" placeholder="Reason for ban..."></textarea>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn view-btn" onclick="closeBanModal()">Cancel</button>
+                <button class="action-btn reject-btn" id="confirmBanBtn">Ban User</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== MOCK DATA ==========
+        const mockData = {
+            users: [
+                { id: 1, name: 'John Doe', email: 'john@example.com', joinDate: '2026-01-15', strikes: 0, status: 'active' },
+                { id: 2, name: 'Jane Smith', email: 'jane@example.com', joinDate: '2026-02-20', strikes: 1, status: 'active' },
+                { id: 3, name: 'Bob Wilson', email: 'bob@example.com', joinDate: '2026-03-01', strikes: 2, status: 'warning' },
+                { id: 4, name: 'Troll User', email: 'troll@example.com', joinDate: '2026-03-10', strikes: 3, status: 'banned' },
+                { id: 5, name: 'Spam Bot', email: 'spam@example.com', joinDate: '2026-03-15', strikes: 0, status: 'active' },
+            ],
+            reviews: [ // Renamed from comments
+                { 
+                    id: 1, 
+                    user: 'John Doe', 
+                    userId: 1, 
+                    recipe: 'Chicken Adobo', 
+                    review: 'Great recipe! Perfectly balanced flavors.', 
+                    rating: 5, 
+                    date: '2026-03-14', 
+                    reported: false,
+                    type: 'positive'
+                },
+                { 
+                    id: 2, 
+                    user: 'Jane Smith', 
+                    userId: 2, 
+                    recipe: 'Pancakes', 
+                    review: 'So fluffy! Best breakfast ever.', 
+                    rating: 5, 
+                    date: '2026-03-14', 
+                    reported: false,
+                    type: 'positive'
+                },
+                { 
+                    id: 3, 
+                    user: 'Bob Wilson', 
+                    userId: 3, 
+                    recipe: 'Lasagna', 
+                    review: 'This recipe is terrible! Too salty and dry.', 
+                    rating: 1, 
+                    date: '2026-03-13', 
+                    reported: true,
+                    type: 'negative'
+                },
+                { 
+                    id: 4, 
+                    user: 'Troll User', 
+                    userId: 4, 
+                    recipe: 'Adobo', 
+                    review: 'This is the best recipe ever!!! Check out my website for more!!!', 
+                    rating: 5, 
+                    date: '2026-03-12', 
+                    reported: true,
+                    type: 'spam'
+                },
+                { 
+                    id: 5, 
+                    user: 'Spam Bot', 
+                    userId: 5, 
+                    recipe: 'Pancakes', 
+                    review: 'Great recipe! Great recipe! Great recipe!', 
+                    rating: 5, 
+                    date: '2026-03-15', 
+                    reported: false,
+                    type: 'spam',
+                    repeated: true
+                },
+                { 
+                    id: 6, 
+                    user: 'John Doe', 
+                    userId: 1, 
+                    recipe: 'Pancakes', 
+                    review: 'Made these again, still perfect!', 
+                    rating: 5, 
+                    date: '2026-03-15', 
+                    reported: false,
+                    type: 'positive'
+                },
+            ],
+            recipes: [
+                { 
+                    id: 1, 
+                    name: 'Grandma\'s Spaghetti', 
+                    submittedBy: 'Jane Smith', 
+                    userId: 2,
+                    category: 'Main Dish', 
+                    date: '2026-03-14',
+                    status: 'pending',
+                    img: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=200',
+                    ingredients: ['Pasta', 'Tomatoes', 'Garlic'],
+                    instructions: ['Boil pasta', 'Make sauce']
+                },
+                { 
+                    id: 2, 
+                    name: 'Vegan Brownies', 
+                    submittedBy: 'Alice Green', 
+                    userId: 5,
+                    category: 'Dessert', 
+                    date: '2026-03-13',
+                    status: 'pending',
+                    img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=200'
+                },
+                { 
+                    id: 3, 
+                    name: 'Spicy Ramen', 
+                    submittedBy: 'Mike Brown', 
+                    userId: 6,
+                    category: 'Main Dish', 
+                    date: '2026-03-12',
+                    status: 'approved', // Approved but not published
+                    img: 'https://images.unsplash.com/photo-1557872943-16e5ac5b1b9c?w=200'
+                },
+                { 
+                    id: 4, 
+                    name: 'Perfect Adobo', 
+                    submittedBy: 'John Doe', 
+                    userId: 1,
+                    category: 'Main Dish', 
+                    date: '2026-03-11',
+                    status: 'published', // Published in community
+                    img: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=200'
+                },
+                { 
+                    id: 5, 
+                    name: 'Soggy Fries', 
+                    submittedBy: 'Bob Wilson', 
+                    userId: 3,
+                    category: 'Appetizer', 
+                    date: '2026-03-10',
+                    status: 'rejected',
+                    rejectionReason: 'Poor quality recipe, unclear instructions',
+                    img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200'
+                },
+            ],
+            questions: [
+                { id: 1, name: 'John Doe', userId: 1, question: 'How do I make adobo less salty?', date: '2026-03-14', status: 'unanswered', public: true },
+                { id: 2, name: 'Sarah Lee', userId: 7, question: 'Can I substitute eggs in pancakes?', date: '2026-03-13', status: 'unanswered', public: true },
+                { 
+                    id: 3, 
+                    name: 'Troll User', 
+                    userId: 4, 
+                    question: 'This site sucks!!!!!!!!', 
+                    date: '2026-03-12', 
+                    status: 'unanswered', 
+                    public: true, 
+                    offensive: true  // ← This triggers Unpublic button
+                },
+                { 
+                    id: 4, 
+                    name: 'Angry User', 
+                    userId: 8, 
+                    question: 'stupid recipe didnt work', 
+                    date: '2026-03-11', 
+                    status: 'unanswered', 
+                    public: true,
+                    offensive: true  // ← This triggers Unpublic button
+                },
+                { id: 5, name: 'Jane Smith', userId: 2, question: 'What is the best rice for fried rice?', date: '2026-03-10', status: 'answered', answer: 'Use day-old jasmine rice!', public: true },
+            ]
+        };
+
+        // State variables
+        let currentItemId = null;
+        let currentUserId = null;
+        let currentFilter = {
+            reviews: 'all',
+            recipes: 'pending',
+            questions: 'unanswered',
+            users: 'all'
+        };
+
+        // ========== INITIALIZE ==========
+        function init() {
+            updateStats();
+            loadReviews();
+            loadRecipes();
+            loadQuestions();
+            loadUsers();
+        }
+
+        function updateStats() {
+            document.getElementById('totalUsers').textContent = mockData.users.length;
+            document.getElementById('totalStrikes').textContent = mockData.users.filter(u => u.strikes > 0).length;
+            document.getElementById('pendingRecipes').textContent = mockData.recipes.filter(r => r.status === 'pending').length;
+            document.getElementById('unansweredQuestions').textContent = mockData.questions.filter(q => q.status === 'unanswered' && q.public !== false).length;
+            document.getElementById('reportedReviews').textContent = mockData.reviews.filter(r => r.reported || r.type === 'spam').length;
+        }
+
+        // ========== TAB SWITCHING ==========
+        function switchMainTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            
+            const tabs = document.querySelectorAll('.admin-tab');
+            if (tab === 'reviews') {
+                tabs[0].classList.add('active');
+                document.getElementById('reviewsTab').style.display = 'block';
+                loadReviews();
+            } else if (tab === 'recipes') {
+                tabs[1].classList.add('active');
+                document.getElementById('recipesTab').style.display = 'block';
+                loadRecipes();
+            } else if (tab === 'questions') {
+                tabs[2].classList.add('active');
+                document.getElementById('questionsTab').style.display = 'block';
+                loadQuestions();
+            } else {
+                tabs[3].classList.add('active');
+                document.getElementById('usersTab').style.display = 'block';
+                loadUsers();
+            }
+        }
+
+        // ========== REVIEWS SECTION ==========
+        function filterReviews(filter) {
+            currentFilter.reviews = filter;
+            document.querySelectorAll('#reviewsTab .sub-tab').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('#reviewsTab .sub-tab');
+            if (filter === 'all') tabs[0].classList.add('active');
+            else if (filter === 'reported') tabs[1].classList.add('active');
+            else tabs[2].classList.add('active');
+            loadReviews();
+        }
+
+        function loadReviews() {
+            const list = document.getElementById('reviewsList');
+            let filtered = [...mockData.reviews];
+            
+            if (currentFilter.reviews === 'reported') {
+                filtered = filtered.filter(r => r.reported);
+            } else if (currentFilter.reviews === 'spam') {
+                filtered = filtered.filter(r => r.type === 'spam' || r.repeated);
+            }
+            
+            list.innerHTML = filtered.map(r => `
+                <div class="admin-card ${r.reported ? 'pending-item' : ''}">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+                                <strong>${r.user}</strong>
+                                <span style="color: var(--gray);">on</span>
+                                <em>${r.recipe}</em>
+                                <span class="user-badge" style="background: #ffc107;">⭐ ${r.rating}</span>
+                                ${r.reported ? '<span class="user-badge" style="background: var(--accent);">🚩 Reported</span>' : ''}
+                                ${r.type === 'spam' ? '<span class="user-badge" style="background: #ff9800;">📢 Potential Spam</span>' : ''}
+                                ${r.repeated ? '<span class="user-badge" style="background: #ff9800;">🔄 Repeated</span>' : ''}
+                            </div>
+                            <p style="margin: 10px 0; color: var(--light);">"${r.review}"</p>
+                            <small style="color: var(--gray);">${r.date}</small>
+                            
+                            <div class="quick-reply" style="margin-top: 15px;">
+                                ${r.rating >= 4 ? `
+                                    <button class="quick-reply-btn" onclick="quickReply(${r.id}, 'positive')">👍 Reply Thanks</button>
+                                ` : r.rating <= 2 ? `
+                                    <button class="quick-reply-btn" onclick="quickReply(${r.id}, 'negative')">👎 Reply Sorry</button>
+                                ` : ''}
+                                <button class="quick-reply-btn" onclick="openReplyModal(${r.id})">✏️ Custom Reply</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+                            <button class="action-btn view-btn" onclick="viewUserReviews(${r.userId})"><i class="fas fa-eye"></i> View User</button>
+                            <button class="action-btn warning-btn" onclick="openWarningModal(${r.userId}, '${r.user}')"><i class="fas fa-exclamation-triangle"></i> Warn</button>
+                            <button class="action-btn delete-btn" onclick="openDeleteReviewModal(${r.id})"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="admin-card" style="text-align: center; padding: 40px;">No reviews found</div>';
+            }
+        }
+
+        // ========== RECIPES SECTION ==========
+        function filterRecipes(filter) {
+            currentFilter.recipes = filter;
+            document.querySelectorAll('#recipesTab .sub-tab').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('#recipesTab .sub-tab');
+            if (filter === 'pending') tabs[0].classList.add('active');
+            else if (filter === 'approved') tabs[1].classList.add('active');
+            else if (filter === 'published') tabs[2].classList.add('active');
+            else tabs[3].classList.add('active');
+            loadRecipes();
+        }
+
+        function loadRecipes() {
+            const list = document.getElementById('recipesList');
+            let filtered = mockData.recipes.filter(r => r.status === currentFilter.recipes);
+            
+            list.innerHTML = filtered.map(r => `
+                <div class="admin-card ${r.status === 'pending' ? 'pending-item' : r.status === 'published' ? 'answered-item' : ''}">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <img src="${r.img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                                <h3 style="margin: 0 0 10px 0;">${r.name}</h3>
+                                <span class="user-badge" style="background: ${r.status === 'published' ? 'var(--success)' : r.status === 'approved' ? '#2196F3' : r.status === 'rejected' ? 'var(--danger)' : 'var(--accent)'}">
+                                    ${r.status === 'published' ? '🌍 PUBLISHED' : r.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <p style="color: var(--gray); margin-bottom: 5px;">By: ${r.submittedBy} | Category: ${r.category}</p>
+                            <small style="color: var(--gray);">Submitted: ${r.date}</small>
+                            
+                            ${r.status === 'rejected' ? `
+                                <p style="color: var(--accent); margin-top: 10px;"><i class="fas fa-info-circle"></i> Reason: ${r.rejectionReason}</p>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                                <button class="action-btn view-btn" onclick="viewRecipeDetails(${r.id})"><i class="fas fa-eye"></i> View</button>
+                                
+                                ${r.status === 'pending' ? `
+                                    <button class="action-btn approve-btn" onclick="approveRecipe(${r.id})"><i class="fas fa-check"></i> Approve</button>
+                                    <button class="action-btn reject-btn" onclick="openRejectModal(${r.id})"><i class="fas fa-times"></i> Reject</button>
+                                    <button class="action-btn publish-btn" onclick="publishRecipe(${r.id})"><i class="fas fa-globe"></i> Approve & Publish</button>
+                                ` : ''}
+                                
+                                ${r.status === 'approved' ? `
+                                    <button class="action-btn publish-btn" onclick="publishRecipe(${r.id})"><i class="fas fa-globe"></i> Publish to Community</button>
+                                    <button class="action-btn reject-btn" onclick="unpublishRecipe(${r.id})"><i class="fas fa-ban"></i> Unpublish</button>
+                                ` : ''}
+                                
+                                ${r.status === 'published' ? `
+                                    <button class="action-btn unpublish-btn" onclick="unpublishRecipe(${r.id})"><i class="fas fa-ban"></i> Unpublish</button>
+                                ` : ''}
+                                
+                                ${r.status === 'rejected' ? `
+                                    <button class="action-btn delete-btn" onclick="deleteRecipe(${r.id})"><i class="fas fa-trash"></i> Delete</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="admin-card" style="text-align: center; padding: 40px;">No recipes found</div>';
+            }
+        }
+
+        // ========== QUESTIONS SECTION ==========
+        function filterQuestions(filter) {
+            currentFilter.questions = filter;
+            document.querySelectorAll('#questionsTab .sub-tab').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('#questionsTab .sub-tab');
+            if (filter === 'unanswered') tabs[0].classList.add('active');
+            else if (filter === 'answered') tabs[1].classList.add('active');
+            else tabs[2].classList.add('active');
+            loadQuestions();
+        }
+
+        function loadQuestions() {
+            const list = document.getElementById('questionsList');
+            let filtered = mockData.questions.filter(q => {
+                if (currentFilter.questions === 'unanswered') return q.status === 'unanswered' && q.public !== false;
+                if (currentFilter.questions === 'answered') return q.status === 'answered';
+                if (currentFilter.questions === 'unpublic') return q.public === false;
+                return true;
+            });
+            
+            list.innerHTML = filtered.map(q => {
+                // Auto-detect problematic questions
+                const isProblematic = q.offensive || 
+                    q.question.toLowerCase().includes('stupid') || 
+                    q.question.toLowerCase().includes('suck') || 
+                    q.question.toLowerCase().includes('bad') ||
+                    q.question.toLowerCase().includes('hate') ||
+                    q.question.length < 10;
+                
+                return `
+                <div class="admin-card ${q.status === 'unanswered' ? 'pending-item' : q.status === 'answered' ? 'answered-item' : 'unpublic-item'}">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <strong>${q.name}</strong>
+                                <span style="color: var(--gray);">asked:</span>
+                                <span style="color: var(--gray);">${q.date}</span>
+                                ${q.public === false ? '<span class="status-badge status-unpublic">🚫 Unpublic</span>' : ''}
+                                ${isProblematic ? '<span class="user-badge" style="background: var(--accent);">⚠️ Needs Review</span>' : ''}
+                            </div>
+                            <p style="margin: 10px 0; color: var(--light); font-size: 1.1em;">"${q.question}"</p>
+                            
+                            ${q.status === 'answered' ? `
+                                <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                                    <strong style="color: var(--primary);"><i class="fas fa-reply"></i> Answer:</strong>
+                                    <p style="margin-top: 5px;">${q.answer}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+                            ${q.status === 'unanswered' ? `
+                                <button class="action-btn approve-btn" onclick="answerQuestion(${q.id})"><i class="fas fa-reply"></i> Answer</button>
+                                ${q.offensive || q.question.toLowerCase().includes('stupid') || 
+                                q.question.toLowerCase().includes('suck') || 
+                                q.question.toLowerCase().includes('bad') ||
+                                q.question.length < 10 ? `
+                                    <button class="action-btn unpublish-btn" onclick="unpublicQuestion(${q.id})"><i class="fas fa-ban"></i> Unpublic</button>
+                                ` : ''}
+                            ` : ''}
+                            <button class="action-btn delete-btn" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ========== USER MANAGEMENT ==========
+        function filterUsers(filter) {
+            currentFilter.users = filter;
+            document.querySelectorAll('#usersTab .sub-tab').forEach(t => t.classList.remove('active'));
+            const tabs = document.querySelectorAll('#usersTab .sub-tab');
+            if (filter === 'all') tabs[0].classList.add('active');
+            else if (filter === 'strikes') tabs[1].classList.add('active');
+            else tabs[2].classList.add('active');
+            loadUsers();
+        }
+
+        function loadUsers() {
+            const list = document.getElementById('usersList');
+            let filtered = mockData.users;
+            
+            if (currentFilter.users === 'strikes') {
+                filtered = filtered.filter(u => u.strikes > 0 && u.status !== 'banned');
+            } else if (currentFilter.users === 'banned') {
+                filtered = filtered.filter(u => u.status === 'banned');
+            }
+            
+            list.innerHTML = filtered.map(u => `
+                <div class="admin-card">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+                                <h3 style="margin: 0;">${u.name}</h3>
+                                <span class="user-badge ${u.status === 'active' ? 'badge-active' : u.status === 'warning' ? 'badge-warning' : 'badge-banned'}">
+                                    ${u.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <p style="color: var(--gray);">${u.email}</p>
+                            <p style="color: var(--gray);">Joined: ${u.joinDate}</p>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                <span style="color: var(--light);">Strikes: ${u.strikes}/3</span>
+                                <div style="width: 100px; height: 8px; background: var(--bg-tertiary); border-radius: 4px;">
+                                    <div style="width: ${(u.strikes/3)*100}%; height: 100%; background: ${u.strikes === 3 ? 'var(--danger)' : u.strikes === 2 ? 'var(--accent)' : 'var(--success)'}; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <small style="color: var(--gray);">Recent activity:</small>
+                                <div style="display: flex; gap: 15px; margin-top: 5px;">
+                                    <span>📝 Reviews: ${mockData.reviews.filter(r => r.userId === u.id).length}</span>
+                                    <span>📋 Recipes: ${mockData.recipes.filter(r => r.userId === u.id).length}</span>
+                                    <span>❓ Questions: ${mockData.questions.filter(q => q.userId === u.id).length}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+                            <button class="action-btn view-btn" onclick="viewUserDetails(${u.id})"><i class="fas fa-eye"></i> View All</button>
+                            
+                            ${u.status !== 'banned' ? `
+                                <button class="action-btn warning-btn" onclick="openWarningModal(${u.id}, '${u.name}')"><i class="fas fa-exclamation-triangle"></i> Warn</button>
+                                <button class="action-btn reject-btn" onclick="addStrike('${u.email}')" ${u.strikes >= 3 ? 'disabled' : ''}>
+                                    <i class="fas fa-exclamation-triangle"></i> + Strike (${u.strikes}/3)
+                                </button>
+                                ${u.strikes >= 3 ? `
+                                    <button class="action-btn reject-btn" onclick="openBanModal(${u.id})"><i class="fas fa-ban"></i> Ban</button>
+                                ` : ''}
+                            ` : ''}
+                            
+                            ${u.status === 'banned' ? `
+                                <button class="action-btn approve-btn" onclick="unbanUser(${u.id})"><i class="fas fa-undo"></i> Unban</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========== REVIEW REPLY FUNCTIONS ==========
+        let currentReplyId = null;
+        
+        function openReplyModal(reviewId) {
+            currentReplyId = reviewId;
+            const review = mockData.reviews.find(r => r.id === reviewId);
+            document.getElementById('replyUserName').textContent = `Replying to: ${review.user}`;
+            document.getElementById('replyOriginalComment').textContent = `"${review.review}"`;
+            document.getElementById('replyMessage').value = '';
+            document.getElementById('replyModal').style.display = 'flex';
+        }
+        
+        function closeReplyModal() {
+            document.getElementById('replyModal').style.display = 'none';
+        }
+        
+        function setQuickReply(type) {
+            let message = '';
+            if (type === 'positive') {
+                message = "Thanks for your wonderful review! We're glad you enjoyed the recipe. Happy cooking! 🍳";
+            } else if (type === 'negative') {
+                message = "We're sorry to hear that you didn't enjoy the recipe. Could you tell us what went wrong? We'd love to help improve your experience.";
+            } else {
+                message = "Thanks for your feedback! We appreciate you taking the time to share your thoughts.";
+            }
+            document.getElementById('replyMessage').value = message;
+        }
+        
+        function quickReply(reviewId, type) {
+            const review = mockData.reviews.find(r => r.id === reviewId);
+            let message = '';
+            if (type === 'positive') {
+                message = "Thanks for your wonderful review! We're glad you enjoyed the recipe. Happy cooking! 🍳";
+            } else if (type === 'negative') {
+                message = "We're sorry to hear that you didn't enjoy the recipe. Could you tell us what went wrong? We'd love to help improve your experience.";
+            }
+            
+            alert(`📧 Reply sent to ${review.user}:\n"${message}"`);
+        }
+
+        // ========== WARNING FUNCTIONS ==========
+        function openWarningModal(userId, userName) {
+            currentUserId = userId;
+            document.getElementById('warningUserName').textContent = `Sending warning to: ${userName}`;
+            document.getElementById('warningMessage').value = '';
+            document.getElementById('warningModal').style.display = 'flex';
+        }
+        
+        function closeWarningModal() {
+            document.getElementById('warningModal').style.display = 'none';
+        }
+        
+        function setWarningReason(type) {
+            let message = '';
+            if (type === 'spam') {
+                message = "We've detected that your review may contain spam content. Please ensure your reviews are genuine and helpful to the community. Continued spam may result in account restrictions.";
+            } else if (type === 'repeat') {
+                message = "We've noticed you've posted multiple similar reviews. Please avoid posting duplicate content as it can clutter the community. Thank you for understanding.";
+            } else if (type === 'offensive') {
+                message = "Your review contains language that may be offensive to others. Please keep our community respectful and kind. Further violations may result in account strikes.";
+            }
+            document.getElementById('warningMessage').value = message;
+        }
+
+        // ========== RECIPE FUNCTIONS ==========
+        function approveRecipe(id) {
+            const recipe = mockData.recipes.find(r => r.id === id);
+            if (recipe) {
+                recipe.status = 'approved';
+                alert(`✅ Approval notification sent to ${recipe.submittedBy}:\n"Your recipe "${recipe.name}" has been approved! We'll notify you when it's published."`);
+                updateStats();
+                loadRecipes();
+            }
+        }
+
+        function publishRecipe(id) {
+            const recipe = mockData.recipes.find(r => r.id === id);
+            if (recipe) {
+                recipe.status = 'published';
+                alert(`📢 Recipe "${recipe.name}" has been PUBLISHED to Community!\n📧 Notification sent to ${recipe.submittedBy}:\n"Your recipe is now live in the Community page! Check it out: [link]"`);
+                updateStats();
+                loadRecipes();
+            }
+        }
+
+        function unpublishRecipe(id) {
+            const recipe = mockData.recipes.find(r => r.id === id);
+            if (recipe && confirm(`Unpublish "${recipe.name}" from community?`)) {
+                recipe.status = 'approved';
+                alert(`📧 Notification sent to ${recipe.submittedBy}:\n"Your recipe "${recipe.name}" has been unpublished. Please contact support if you have questions."`);
+                updateStats();
+                loadRecipes();
+            }
+        }
+
+        function deleteRecipe(id) {
+            if (confirm('Permanently delete this recipe?')) {
+                mockData.recipes = mockData.recipes.filter(r => r.id !== id);
+                updateStats();
+                loadRecipes();
+            }
+        }
+
+        // ========== QUESTION FUNCTIONS ==========
+        function answerQuestion(id) {
+            const question = mockData.questions.find(q => q.id === id);
+            if (question) {
+                const answer = prompt('Enter your answer:');
+                if (answer) {
+                    question.status = 'answered';
+                    question.answer = answer;
+                    alert(`📧 Answer sent to ${question.name}:\n"Your question has been answered: ${answer}"`);
+                    loadQuestions();
+                }
+            }
+        }
+
+        function unpublicQuestion(id) {
+            const question = mockData.questions.find(q => q.id === id);
+            if (question) {
+                const reason = prompt('Reason for unpublic (will be sent to user):');
+                if (reason) {
+                    question.public = false;
+                    alert(`📧 Notification sent to ${question.name}:\n"Your question has been hidden from public view because: ${reason}"`);
+                    loadQuestions();
+                }
+            }
+        }
+
+        function deleteQuestion(id) {
+            if (confirm('Delete this question?')) {
+                mockData.questions = mockData.questions.filter(q => q.id !== id);
+                updateStats();
+                loadQuestions();
+            }
+        }
+
+        // ========== USER FUNCTIONS ==========
+        function addStrike(email) {
+            const user = mockData.users.find(u => u.email === email);
+            if (user && user.strikes < 3) {
+                user.strikes++;
+                if (user.strikes >= 3) {
+                    user.status = 'banned';
+                    alert(`🚫 User ${user.name} has been BANNED for reaching 3 strikes!`);
+                } else if (user.strikes === 2) {
+                    user.status = 'warning';
+                    alert(`⚠️ Warning: ${user.name} now has 2/3 strikes`);
+                }
+                
+                alert(`📧 Warning sent to ${user.email}:\n"You have received a strike (${user.strikes}/3) for violating community guidelines."`);
+                
+                updateStats();
+                loadUsers();
+            }
+        }
+
+        function viewUserDetails(userId) {
+            const user = mockData.users.find(u => u.id === userId);
+            const userReviews = mockData.reviews.filter(r => r.userId === userId);
+            const userRecipes = mockData.recipes.filter(r => r.userId === userId);
+            const userQuestions = mockData.questions.filter(q => q.userId === userId);
+            
+            alert(`📊 USER DETAILS: ${user.name}\n` +
+                  `Email: ${user.email}\n` +
+                  `Status: ${user.status}\n` +
+                  `Strikes: ${user.strikes}/3\n` +
+                  `\n📝 Reviews: ${userReviews.length}\n` +
+                  `📋 Recipes: ${userRecipes.length}\n` +
+                  `❓ Questions: ${userQuestions.length}`);
+        }
+
+        // ========== MODAL FUNCTIONS ==========
+        let currentRejectId = null;
+        
+        function openRejectModal(recipeId) {
+            currentRejectId = recipeId;
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+        
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+            document.getElementById('rejectReason').value = '';
+        }
+        
+        function submitRejection() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+            
+            const recipe = mockData.recipes.find(r => r.id === currentRejectId);
+            if (recipe) {
+                recipe.status = 'rejected';
+                recipe.rejectionReason = reason;
+                
+                alert(`✅ Rejection notification sent to ${recipe.submittedBy}:\n"Your recipe "${recipe.name}" was rejected because: ${reason}"`);
+                
+                updateStats();
+                loadRecipes();
+            }
+            
+            closeRejectModal();
+        }
+
+        // Delete review modal
+        let currentDeleteReviewId = null;
+        
+        function openDeleteReviewModal(reviewId) {
+            currentDeleteReviewId = reviewId;
+            document.getElementById('deleteReviewModal').style.display = 'flex';
+        }
+        
+        function closeDeleteReviewModal() {
+            document.getElementById('deleteReviewModal').style.display = 'none';
+            document.getElementById('deleteReviewReason').value = '';
+        }
+        
+        function submitDeleteReview() {
+            const reason = document.getElementById('deleteReviewReason').value.trim() || 'Violates community guidelines';
+            const review = mockData.reviews.find(r => r.id === currentDeleteReviewId);
+            
+            if (review) {
+                mockData.reviews = mockData.reviews.filter(r => r.id !== currentDeleteReviewId);
+                
+                const user = mockData.users.find(u => u.id === review.userId);
+                if (user) {
+                    user.strikes++;
+                    if (user.strikes >= 3) {
+                        user.status = 'banned';
+                        alert(`🚫 User ${user.name} has been BANNED for 3 strikes!`);
+                    } else if (user.strikes === 2) {
+                        user.status = 'warning';
+                    }
+                    
+                    alert(`📧 Notification sent to ${user.email}:\n"Your review was removed because: ${reason}"\nStrikes: ${user.strikes}/3`);
+                }
+                
+                updateStats();
+                loadReviews();
+                loadUsers();
+            }
+            
+            closeDeleteReviewModal();
+        }
+
+        // Ban modal
+        let currentBanId = null;
+        
+        function openBanModal(userId) {
+            currentBanId = userId;
+            document.getElementById('banUserModal').style.display = 'flex';
+        }
+        
+        function closeBanModal() {
+            document.getElementById('banUserModal').style.display = 'none';
+            document.getElementById('banReason').value = '';
+        }
+        
+        function submitBan() {
+            const reason = document.getElementById('banReason').value.trim() || 'Repeated violations';
+            const user = mockData.users.find(u => u.id === currentBanId);
+            
+            if (user) {
+                user.status = 'banned';
+                alert(`📧 Ban notification sent to ${user.email}:\n"Your account has been banned because: ${reason}"`);
+                
+                updateStats();
+                loadUsers();
+            }
+            
+            closeBanModal();
+        }
+
+        // ========== VIEW FUNCTIONS ==========
+        function viewUserReviews(userId) {
+            const userReviews = mockData.reviews.filter(r => r.userId === userId);
+            alert(`User has ${userReviews.length} reviews:\n${userReviews.map(r => `- "${r.review}" on ${r.recipe} (⭐${r.rating})`).join('\n')}`);
+        }
+
+        function viewRecipeDetails(id) {
+            const recipe = mockData.recipes.find(r => r.id === id);
+            alert(`📝 RECIPE DETAILS:\nName: ${recipe.name}\nBy: ${recipe.submittedBy}\nCategory: ${recipe.category}\nStatus: ${recipe.status}\nIngredients: ${recipe.ingredients?.join(', ') || 'N/A'}\nInstructions: ${recipe.instructions?.length || 0} steps`);
+        }
+
+        // ========== MISC FUNCTIONS ==========
+        function logout() {
+            window.location.href = '01 - MAIN - HTML.html';
+        }
+
+        // Connect modal buttons
+        document.getElementById('sendReplyBtn').onclick = function() {
+            const message = document.getElementById('replyMessage').value.trim();
+            if (message) {
+                const review = mockData.reviews.find(r => r.id === currentReplyId);
+                alert(`📧 Reply sent to ${review.user}:\n"${message}"`);
+                closeReplyModal();
+            }
+        };
+
+        document.getElementById('sendWarningBtn').onclick = function() {
+            const message = document.getElementById('warningMessage').value.trim();
+            const autoDelete = document.getElementById('autoDeleteCheck').checked;
+            const hours = document.getElementById('deleteHours').value;
+            
+            if (message) {
+                const user = mockData.users.find(u => u.id === currentUserId);
+                let warningMsg = `📧 Warning sent to ${user.email}:\n"${message}"`;
+                
+                if (autoDelete) {
+                    warningMsg += `\n\n⏰ Auto-delete in ${hours} hours if behavior continues.`;
+                }
+                
+                alert(warningMsg);
+                closeWarningModal();
+            }
+        };
+
+        document.getElementById('confirmRejectBtn').onclick = submitRejection;
+        document.getElementById('confirmDeleteReviewBtn').onclick = submitDeleteReview;
+        document.getElementById('confirmBanBtn').onclick = submitBan;
+        document.getElementById('confirmUnpublicBtn').onclick = function() {
+            const reason = document.getElementById('unpublicReason').value.trim() || 'Violates guidelines';
+            const question = mockData.questions.find(q => q.id === currentItemId);
+            if (question) {
+                question.public = false;
+                alert(`📧 Notification sent to ${question.name}:\n"Your question has been hidden because: ${reason}"`);
+                closeUnpublicModal();
+                loadQuestions();
+            }
+        };
+
+        function closeUnpublicModal() {
+            document.getElementById('unpublicModal').style.display = 'none';
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
