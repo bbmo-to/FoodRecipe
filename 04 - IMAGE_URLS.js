@@ -1,9 +1,9 @@
 // 04 - IMAGE_URLS.js
 // GitHub Raw Image URLs
 
-const GITHUB_USERNAME = "YOUR_USERNAME"; // Replace with your GitHub username
-const GITHUB_REPO = "food-recipe-images"; // Replace with your repo name
-const GITHUB_BRANCH = "main"; // or 'master'
+const GITHUB_USERNAME = "bbmo-to"; // From your image URLs pattern
+const GITHUB_REPO = "food-recipe-images";
+const GITHUB_BRANCH = "main";
 
 function getGitHubImageUrl(filename) {
     return `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/${filename}`;
